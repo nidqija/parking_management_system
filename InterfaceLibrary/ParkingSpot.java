@@ -57,7 +57,13 @@ public class ParkingSpot {
     }
 
     public void occupy() { this.isOccupied = true; }
+
     public String getSpotID() { return spotID; }
+
+    public String vacate(){
+        this.isOccupied = false;
+        return this.spotID;
+    }
     
     @Override
     public String toString() {

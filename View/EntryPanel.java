@@ -6,10 +6,9 @@ import Model.Ticket;
 import Model.Vehicle;
 import Model.Vehicle.VehicleType;
 import WritetoCSV.WritetoCSV;
-
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import javax.swing.*;
 
 public class EntryPanel extends JPanel {
 

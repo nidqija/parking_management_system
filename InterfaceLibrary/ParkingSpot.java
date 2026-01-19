@@ -10,6 +10,7 @@ public class ParkingSpot {
         REGULAR,
         HANDICAPPED,
         RESERVED
+
         //electric car etc..
     }
 

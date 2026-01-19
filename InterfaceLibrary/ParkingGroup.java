@@ -65,6 +65,7 @@ public class ParkingGroup {
                 return ParkingSpot.SpotType.HANDICAPPED;
             case "reserved":
                 return ParkingSpot.SpotType.RESERVED;
+                   
             default:
                 System.out.println("Warning: Unknown spot type '" + csvType + "', defaulting to Regular.");
                 return ParkingSpot.SpotType.REGULAR;

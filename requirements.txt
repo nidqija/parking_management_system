@@ -1,0 +1,5 @@
+run :
+
+.\build.bat 
+
+on your terminal to compile and run the sqlite driver

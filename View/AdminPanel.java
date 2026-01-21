@@ -64,7 +64,15 @@ public class AdminPanel {
        JButton manageFines = new JButton("Manage Parking Fines");
        styleButton(manageFines, btnSize);
        verticalMenu.add(manageFines);
+
+       manageFines.addActionListener(e -> {
+           new ManageFines();
+       });
+       
        verticalMenu.add(Box.createRigidArea(new Dimension(250, 20)));
+
+
+
 
        JButton viewOutstandingFines = new JButton("View Outstanding Fines");
        styleButton(viewOutstandingFines, btnSize);

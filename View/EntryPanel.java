@@ -5,7 +5,6 @@ import InterfaceLibrary.ParkingSpot;
 import Model.Ticket;
 import Model.Vehicle;
 import Model.Vehicle.VehicleType;
-import WritetoCSV.WritetoCSV;
 import java.awt.*;
 import java.util.List;
 import javax.swing.*;
@@ -58,17 +57,15 @@ public class EntryPanel extends JPanel {
         add(new JScrollPane(txtDisplay), BorderLayout.CENTER);
 
         // --- Event Listeners ---
-        
-        cmbType.addActionListener(e -> {
-            cmbAvailableSpots.removeAllItems(); // Clear stale spots
-            cmbAvailableSpots.setEnabled(false);
-            btnEnter.setEnabled(false);         // Disable entry button
-            txtDisplay.setText("");
+cmbType.addActionListener(e -> {
+            resetSelection(); // Refactored reset logic
         });
-        // -------------------------------------------------------
 
-        // 1. Check for available spots based on type
+        // 1. Check for available spots
         btnCheckSpots.addActionListener(e -> {
+            // Optional: Refresh DB data to ensure availability is current
+            parkingGroup.refresh(); 
+
             VehicleType selectedType = (VehicleType) cmbType.getSelectedItem();
             List<ParkingSpot> available = parkingGroup.getAvailableSpots(selectedType);
             
@@ -92,6 +89,13 @@ public class EntryPanel extends JPanel {
         btnEnter.addActionListener(e -> processEntry());
     }
 
+    private void resetSelection() {
+        cmbAvailableSpots.removeAllItems(); 
+        cmbAvailableSpots.setEnabled(false);
+        btnEnter.setEnabled(false);       
+        txtDisplay.setText("");
+    }
+
     private void processEntry() {
         String plate = txtPlate.getText().trim();
         if (plate.isEmpty()) {
@@ -101,40 +105,35 @@ public class EntryPanel extends JPanel {
 
         VehicleType type = (VehicleType) cmbType.getSelectedItem();
         
-        // 2. Get Selected Spot
         ParkingSpot selectedSpot = (ParkingSpot) cmbAvailableSpots.getSelectedItem();
         if (selectedSpot == null) return;
 
-         //this ensures logic integrity
+        // Double check availability 
         if (!selectedSpot.isAvailableFor(type)) {
-            JOptionPane.showMessageDialog(this, 
-                "Error: This spot is not suitable for a " + type + ".\nPlease click 'Find Spots' again.");
+            JOptionPane.showMessageDialog(this, "Error: Spot mismatch.");
             return;
         }
-        // ------------------------------------------------------
 
-        // 1. Create Vehicle (Moved after check)
+        // 1. Create Vehicle 
         Vehicle vehicle = new Vehicle(plate, type);
 
-        // 3. Mark Occupied
+        // 2. Mark Occupied (Memory Update)
         selectedSpot.occupy();
 
-        // 4. Generate Ticket
+        // 3. Generate Ticket
         Ticket ticket = new Ticket(vehicle, selectedSpot.getSpotID());
 
-        // 5. Save to CSV
-        WritetoCSV.saveTicket(ticket);
+        // REMOVED: WritetoCSV.saveTicket(ticket); 
+        // Reason: Ticket constructor now handles DB insertion automatically.
 
-        // 6. Display to User
+        // 4. Display to User
         txtDisplay.setText("=== ENTRY CONFIRMED ===\n");
         txtDisplay.append(ticket.getTicketDetails());
         
-        // Reset UI for next user
+        // 5. Cleanup
         txtPlate.setText("");
-        cmbAvailableSpots.removeAllItems();
-        cmbAvailableSpots.setEnabled(false);
-        btnEnter.setEnabled(false);
-        JOptionPane.showMessageDialog(this, "Ticket Generated Successfully!");
+        resetSelection();
+        JOptionPane.showMessageDialog(this, "Ticket Generated & Saved to Database!");
     }
     
     // Main method for testing

@@ -1,13 +1,28 @@
+package Data;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 public class Sqlite {
+
+    private static String url = "jdbc:sqlite:Data/Parking_Management_System.db";
+
+
+    public Connection connect(){
+        Connection conn = null;
+        try {
+            conn = DriverManager.getConnection(url);
+            System.out.println("Connection to SQLite has been established.");
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+        return conn;
+    }
+
     public static void main(String[] args) {
         // This will create 'Parking_Management_System.db' in your project folder
         // Ensure the "Data" folder exists, or change path to "Parking_Management_System.db"
-        String url = "jdbc:sqlite:Data/Parking_Management_System.db";
 
         // 1. Load the driver
         try {
@@ -21,7 +36,10 @@ public class Sqlite {
         try (Connection conn = DriverManager.getConnection(url)) {
             if (conn != null) {
                 System.out.println("Connection to SQLite has been established.");
-
+                
+                // Create a sample table
+                
+                
                 try (Statement stmt = conn.createStatement()) {
                     
                     // Enable Foreign Keys (OFF by default in SQLite)
@@ -103,6 +121,14 @@ public class Sqlite {
                             ");";
                     stmt.execute(tb_reservations);
 
+
+                    String admin_table = "CREATE TABLE IF NOT EXISTS Admins (" +
+                            "admin_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                            "username TEXT NOT NULL UNIQUE, " +
+                            "password TEXT NOT NULL" +
+                            ");";
+                    stmt.execute(admin_table);
+
                     System.out.println("All tables created successfully.");
 
                     System.out.println("Inserting sample data...");
@@ -123,6 +149,7 @@ public class Sqlite {
                     // C. Insert 45 Parking Spots (Loop Logic)
                     // ------------------------------------------------------------
                     // We delete existing spots to avoid duplicates during testing re-runs
+                    stmt.execute("DELETE FROM Tickets;");
                     stmt.execute("DELETE FROM Parking_Spots;"); 
                     
                     for (int floor = 1; floor <= 3; floor++) {
@@ -188,6 +215,9 @@ public class Sqlite {
                     // BAD-5555 Left without paying a previous fine
                     stmt.execute("INSERT OR IGNORE INTO Fines_Ledger (license_plate, violation_type, amount, status, created_at) " +
                                  "VALUES ('BAD-5555', 'OVERSTAY', 50.00, 'UNPAID', datetime('now', '-5 days'));");
+
+                    stmt.execute("INSERT INTO Admins (username, password) " +
+                                 "VALUES ('raziq', 'raziq123');");
 
                     System.out.println("Sample data inserted successfully.");
                 

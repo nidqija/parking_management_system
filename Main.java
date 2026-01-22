@@ -1,6 +1,9 @@
+import View.SignInSignUp;
+import javax.swing.SwingUtilities;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello, Parking Management System!");
+        SwingUtilities.invokeLater(() -> new SignInSignUp());
     }
 }
+

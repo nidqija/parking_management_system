@@ -1,12 +1,21 @@
 package View;
 
+import Model.User;
 import javax.swing.*;
 
 
 
 public class MainFrame extends JFrame {
+    private User currentUser;
+
     public MainFrame() {
-        setTitle("Parking Management System");
+        this(null);
+    }
+
+    public MainFrame(User user) {
+        this.currentUser = user;
+        
+        setTitle("Parking Management System" + (user != null ? " - " + user.getFullname() : ""));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 800);
         setLocationRelativeTo(null);
@@ -22,6 +31,10 @@ public class MainFrame extends JFrame {
 
         add(tabbedPane);
         setVisible(true);
+    }
+
+    public User getCurrentUser() {
+        return currentUser;
     }
 
    

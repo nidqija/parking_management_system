@@ -25,10 +25,20 @@ public class Sqlite {
                 String sql = "CREATE TABLE IF NOT EXISTS students (" +
                              "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                              "name TEXT NOT NULL);";
+
+                String sql2 = "CREATE TABLE IF NOT EXISTS parking_spots (" +
+                              "spot_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                              "is_occupied BOOLEAN NOT NULL);";
+
+                
+
+                
                 
                 try (Statement stmt = conn.createStatement()) {
                     stmt.execute(sql);
+                    stmt.execute(sql2);
                     System.out.println("Table 'students' is ready.");
+                    System.out.println("Table 'parking_spots' is ready.");
                 }
             }
         } catch (SQLException e) {

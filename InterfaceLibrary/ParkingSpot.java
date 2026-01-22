@@ -4,14 +4,11 @@ import Model.Vehicle.VehicleType;
 
 public class ParkingSpot {
 
-    // Matches your CSV labels
     public enum SpotType {
         COMPACT,
         REGULAR,
         HANDICAPPED,
         RESERVED
-
-        //electric car etc..
     }
 
     private String spotID;
@@ -24,11 +21,10 @@ public class ParkingSpot {
         this.isOccupied = false;
     }
 
-    // Checks if a specific vehicle fits in this specific spot.
     public boolean isAvailableFor(VehicleType vType) {
         if (isOccupied) return false;
 
-        // 1. Reserved spots are off-limits 
+        // 1. Reserved spots are off-limits for general entry
         if (this.type == SpotType.RESERVED) {
             return false; 
         }
@@ -36,35 +32,28 @@ public class ParkingSpot {
         // 2. Logic based on Vehicle Type
         switch (vType) {
             case MOTORCYCLE:
-                // Rule: Compact spots only
-                return this.type == SpotType.COMPACT;
-
+                return this.type == SpotType.COMPACT; // Compact only
             case CAR:
-                // Rule: Compact OR Regular
                 return this.type == SpotType.COMPACT || this.type == SpotType.REGULAR;
-
-            case TRUCK:
-                // Rule: Regular spots only
-                return this.type == SpotType.REGULAR;
-
+            case TRUCK: // or SUV
+                return this.type == SpotType.REGULAR; // Regular only
             case HANDICAPPED:
-                // Rule: Can park in any spot 
-                return true; 
-
+                return true; // Any spot
             default:
                 return false;
         }
     }
 
     public void occupy() { this.isOccupied = true; }
+    
+    public String vacate() { 
+        this.isOccupied = false; 
+        return this.spotID; 
+    }
 
     public String getSpotID() { return spotID; }
+    public SpotType getType() { return type; } // Added getter
 
-    public String vacate(){
-        this.isOccupied = false;
-        return this.spotID;
-    }
-    
     @Override
     public String toString() {
         return spotID + " (" + type + ")";

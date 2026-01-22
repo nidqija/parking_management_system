@@ -1,74 +1,61 @@
 package InterfaceLibrary;
 
 import Model.Vehicle.VehicleType;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class ParkingGroup {
     private List<ParkingSpot> spots;
-    private static final String PARKING_DATA_FILE = "Data/parking_spots.csv";
+    private static final String DB_URL = "jdbc:sqlite:Data/Parking_Management_System.db";
 
     public ParkingGroup() {
         spots = new ArrayList<>();
-        loadSpotsFromCSV();
+        loadSpotsFromDB();
     }
 
-    private void loadSpotsFromCSV() {
-        try (BufferedReader br = new BufferedReader(new FileReader(PARKING_DATA_FILE))) {
-            String line;
-            boolean isHeader = true;
+    private void loadSpotsFromDB() {
+        String query = "SELECT spot_id, spot_type, status FROM Parking_Spots";
 
-            while ((line = br.readLine()) != null) {
-                if (isHeader) { isHeader = false; continue; }
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
 
-                // CSV Format: spot_id, floor_id, spot_type, status
-                // Example: F1-R1-S1, 1, Handicapped, Occupied
-                String[] data = line.split(",");
-                if (data.length < 4) continue;
+            while (rs.next()) {
+                String spotID = rs.getString("spot_id");
+                String typeStr = rs.getString("spot_type");
+                String statusStr = rs.getString("status");
 
-                String spotID = data[0].trim();
-                String typeStr = data[2].trim();  // "Handicapped", "Compact", etc.
-                String statusStr = data[3].trim(); // "Occupied", "Available"
-
-                // 1. Map the CSV string to Java Enum
+                // 1. Map DB String to Enum
                 ParkingSpot.SpotType type = mapStringToSpotType(typeStr);
 
-                // 2. Create the spot
+                // 2. Create Spot
                 ParkingSpot spot = new ParkingSpot(spotID, type);
 
-                // 3. Set status
-                if (statusStr.equalsIgnoreCase("Occupied")) {
+                // 3. Set Status
+                if ("OCCUPIED".equalsIgnoreCase(statusStr)) {
                     spot.occupy();
                 }
 
                 spots.add(spot);
             }
-            System.out.println("Loaded " + spots.size() + " spots.");
+            System.out.println("Database: Loaded " + spots.size() + " spots.");
 
-        } catch (IOException e) {
-            System.err.println("Error loading data: " + e.getMessage());
+        } catch (SQLException e) {
+            System.err.println("Database Error loading spots: " + e.getMessage());
         }
     }
 
-    private ParkingSpot.SpotType mapStringToSpotType(String csvType) {
-        // Normalize the string (remove spaces, ignore case)
-        switch (csvType.trim().toLowerCase()) {
-            case "compact":
-                return ParkingSpot.SpotType.COMPACT;
-            case "regular":
-                return ParkingSpot.SpotType.REGULAR;
-            case "handicapped":
-                return ParkingSpot.SpotType.HANDICAPPED;
-            case "reserved":
-                return ParkingSpot.SpotType.RESERVED;
-                   
-            default:
-                System.out.println("Warning: Unknown spot type '" + csvType + "', defaulting to Regular.");
-                return ParkingSpot.SpotType.REGULAR;
+    private ParkingSpot.SpotType mapStringToSpotType(String dbType) {
+        if (dbType == null) return ParkingSpot.SpotType.REGULAR;
+        
+        switch (dbType.trim().toUpperCase()) {
+            case "COMPACT": return ParkingSpot.SpotType.COMPACT;
+            case "REGULAR": return ParkingSpot.SpotType.REGULAR;
+            case "HANDICAPPED": return ParkingSpot.SpotType.HANDICAPPED;
+            case "RESERVED": return ParkingSpot.SpotType.RESERVED;
+            default: return ParkingSpot.SpotType.REGULAR;
         }
     }
 
@@ -83,5 +70,11 @@ public class ParkingGroup {
             if (s.getSpotID().equals(id)) return s;
         }
         return null;
+    }
+    
+    // Helper to refresh data (e.g. after a new car enters)
+    public void refresh() {
+        spots.clear();
+        loadSpotsFromDB();
     }
 }

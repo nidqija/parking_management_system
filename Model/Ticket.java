@@ -1,36 +1,86 @@
 package Model;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+
+//When this constructor is called, it performs the insertion to the database with 
+// Ticket ticket = new Ticket(vehicle, spotID), FIND at entry panel line 124
 public class Ticket {
     private String ticketID;
     private Vehicle vehicle;
     private String spotID;
     private LocalDateTime entryTime;
 
+    // 1. Database FORMAT, so that easy to query later, this is what will be stored in DB
+    private static final DateTimeFormatter DB_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    
+    // 2. REQUIREMENT FORMAT, this is what will be displayed on ticket
+    private static final DateTimeFormatter ID_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+
+    private static final String DB_URL = "jdbc:sqlite:Data/Parking_Management_System.db";
     public Ticket(Vehicle vehicle, String spotID) {
         this.vehicle = vehicle;
         this.spotID = spotID;
-        this.entryTime = LocalDateTime.now();
+        this.entryTime = LocalDateTime.now().withNano(0);
         this.ticketID = generateTicketID();
+
+        saveToDB();
     }
 
     private String generateTicketID() {
         // Requirement: T-PLATE-TIMESTAMP
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
-        return "T-" + vehicle.getPlateNumber() + "-" + entryTime.format(dtf);
+        return "T-" + vehicle.getPlateNumber() + "-" + entryTime.format(ID_FORMATTER);
     }
 
-    public String getTicketDetails() {
-        return "Ticket ID: " + ticketID + "\n" +
-               "Spot: " + spotID + "\n" +
-               "Entry: " + entryTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+  public String getTicketDetails() {
+        return "---------------------------------\n" +
+               " TICKET ID : " + ticketID + "\n" +
+               " SPOT NO   : " + spotID + "\n" +
+               " VEHICLE   : " + vehicle.getPlateNumber() + "\n" +
+               " ENTRY TIME: " + entryTime.format(DB_FORMATTER) + "\n" +
+               "---------------------------------";
     }
+  
 
-    // Getters for CSV writing
     public String getTicketID() { return ticketID; }
     public String getSpotID() { return spotID; }
     public String getPlateNumber() { return vehicle.getPlateNumber(); }
     public String getEntryTimeStr() { return entryTime.toString(); }
+
+    private void saveToDB() {
+        String insertTicketSQL = "INSERT INTO Tickets(ticket_number, license_plate, spot_id, entry_time, payment_status) VALUES(?,?,?,?,?)";
+        String updateSpotSQL = "UPDATE Parking_Spots SET status = 'OCCUPIED', current_vehicle_plate = ? WHERE spot_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            conn.setAutoCommit(false); // Transaction
+
+            // 1. Insert Ticket
+            try (PreparedStatement pstmt = conn.prepareStatement(insertTicketSQL)) {
+                pstmt.setString(1, this.ticketID);
+                pstmt.setString(2, this.vehicle.getPlateNumber());
+                pstmt.setString(3, this.spotID);
+                pstmt.setString(4, this.entryTime.format(DB_FORMATTER)); 
+                pstmt.setString(5, "UNPAID");
+                pstmt.executeUpdate();
+            }
+
+            // 2. Update Spot Status
+            try (PreparedStatement pstmt = conn.prepareStatement(updateSpotSQL)) {
+                pstmt.setString(1, this.vehicle.getPlateNumber());
+                pstmt.setString(2, this.spotID);
+                pstmt.executeUpdate();
+            }
+
+            conn.commit();
+            System.out.println("Ticket generated and saved: " + this.ticketID);
+
+        } catch (SQLException e) {
+            System.err.println("Error saving ticket: " + e.getMessage());
+        }
+    }
 }

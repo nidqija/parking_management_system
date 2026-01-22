@@ -78,7 +78,19 @@ public class AdminPanel {
        styleButton(viewOutstandingFines, btnSize);
        verticalMenu.add(viewOutstandingFines);
 
+        verticalMenu.add(Box.createRigidArea(new Dimension(250, 20)));
+
+
+       JButton signOutButton = new JButton("Sign Out");
+       styleButton(signOutButton, btnSize);
+       verticalMenu.add(signOutButton);
+
 //================================================================================== //
+
+       signOutButton.addActionListener(e -> {
+           frame.dispose();
+           new AdminSignInPanel();
+       });
 
 
 
@@ -97,4 +109,7 @@ public class AdminPanel {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new AdminPanel());
     }
+
+
+   
 }

@@ -1,8 +1,10 @@
 package InterfaceLibrary;
-
 import Model.Vehicle.VehicleType;
 
 public class ParkingSpot {
+
+
+    public ParkingSpot(){};
 
     public enum SpotType {
         COMPACT,
@@ -58,4 +60,20 @@ public class ParkingSpot {
     public String toString() {
         return spotID + " (" + type + ")";
     }
+
+
+   
+  
+
+    
+
+
+    
+
+
+
+
+
+
+    
 }

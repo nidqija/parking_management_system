@@ -1,7 +1,8 @@
-package Controller;
+package Model;
 import Data.Sqlite;
 import InterfaceLibrary.UserInfo;
 import View.AdminPanel;
+import View.AdminSignInPanel;
 
 public class Admin implements UserInfo  {
 
@@ -10,7 +11,6 @@ public class Admin implements UserInfo  {
     private String password;
     private Sqlite sqlite;
 
-    
 
  // constructor to initialize Admin object //
 
@@ -60,6 +60,7 @@ public class Admin implements UserInfo  {
     public void signout() {
        this.username = null;
        this.password = null;
+       new AdminSignInPanel();
     }
 
 

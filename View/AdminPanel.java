@@ -1,8 +1,10 @@
 package View;
+import Model.Admin;
 import java.awt.*;
 import javax.swing.*;
 
 public class AdminPanel {
+
 
     private void styleButton(JButton button, Dimension size) {
         button.setAlignmentX(Component.CENTER_ALIGNMENT); // Centers button in Box
@@ -61,6 +63,10 @@ public class AdminPanel {
        verticalMenu.add(manageSpots);
        verticalMenu.add(Box.createRigidArea(new Dimension(250, 20)));
 
+         manageSpots.addActionListener(e -> {
+              new ManageFloorPanel(1);
+         });
+
        JButton manageFines = new JButton("Manage Parking Fines");
        styleButton(manageFines, btnSize);
        verticalMenu.add(manageFines);
@@ -88,8 +94,8 @@ public class AdminPanel {
 //================================================================================== //
 
        signOutButton.addActionListener(e -> {
-           frame.dispose();
-           new AdminSignInPanel();
+          Admin admin = new Admin("", "");
+          admin.signout();
        });
 
 

@@ -1,5 +1,5 @@
 package View;
-import Controller.Admin;
+import Model.Admin;
 import java.awt.*;
 import javax.swing.*;
 

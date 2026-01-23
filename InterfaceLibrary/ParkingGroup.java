@@ -77,4 +77,14 @@ public class ParkingGroup {
         spots.clear();
         loadSpotsFromDB();
     }
+
+
+   public List<ParkingSpot> getAllSpots() {
+        return this.spots; // returs all parking spots loaded from db
+    }
+
+
+    
+
+
 }

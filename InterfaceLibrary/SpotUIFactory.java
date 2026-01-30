@@ -1,16 +1,20 @@
 package InterfaceLibrary;
 
-import java.sql.Connection;
-import javax.swing.JButton;
-import javax.swing.JPanel;
+import Data.Sqlite;
+import Model.ParkingSpot;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import Data.Sqlite;
+import java.sql.Connection;
+import javax.swing.JButton;
+import javax.swing.JPanel;
 
 public class SpotUIFactory {
 
     private Sqlite sqlite = new Sqlite();
+
+
+    
      // Method to load parking spots into a given JPanel grid for a specific floor //
 
        public void loadParkingSpots(JPanel grid , int floorId){
@@ -29,6 +33,11 @@ public class SpotUIFactory {
                 JButton spotButton = new JButton(spotID + " - " + type + " (" + status + ")");
                 styleButton(spotButton, status);
                 grid.add(spotButton);
+
+                spotButton.addActionListener(e -> {
+                    ParkingSpot ps = new ParkingSpot();
+                    ps.loadParkingInfo(spotID);
+                });
             }
         } catch (Exception e) {
             e.printStackTrace();

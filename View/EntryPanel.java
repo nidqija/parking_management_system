@@ -1,7 +1,7 @@
 package View;
 
 import InterfaceLibrary.ParkingGroup;
-import InterfaceLibrary.ParkingSpot;
+import InterfaceLibrary.ParkingSpotInterface;
 import Model.Ticket;
 import Model.Vehicle;
 import Model.Vehicle.VehicleType;
@@ -13,7 +13,7 @@ public class EntryPanel extends JPanel {
 
     private JTextField txtPlate;
     private JComboBox<VehicleType> cmbType;
-    private JComboBox<ParkingSpot> cmbAvailableSpots;
+    private JComboBox<ParkingSpotInterface> cmbAvailableSpots;
     private JButton btnCheckSpots;
     private JButton btnEnter;
     private JTextArea txtDisplay;
@@ -67,7 +67,7 @@ cmbType.addActionListener(e -> {
             parkingGroup.refresh(); 
 
             VehicleType selectedType = (VehicleType) cmbType.getSelectedItem();
-            List<ParkingSpot> available = parkingGroup.getAvailableSpots(selectedType);
+            List<ParkingSpotInterface> available = parkingGroup.getAvailableSpots(selectedType);
             
             cmbAvailableSpots.removeAllItems();
             
@@ -76,7 +76,7 @@ cmbType.addActionListener(e -> {
                 btnEnter.setEnabled(false);
                 cmbAvailableSpots.setEnabled(false);
             } else {
-                for (ParkingSpot p : available) {
+                for (ParkingSpotInterface p : available) {
                     cmbAvailableSpots.addItem(p);
                 }
                 cmbAvailableSpots.setEnabled(true);
@@ -105,7 +105,7 @@ cmbType.addActionListener(e -> {
 
         VehicleType type = (VehicleType) cmbType.getSelectedItem();
         
-        ParkingSpot selectedSpot = (ParkingSpot) cmbAvailableSpots.getSelectedItem();
+        ParkingSpotInterface selectedSpot = (ParkingSpotInterface) cmbAvailableSpots.getSelectedItem();
         if (selectedSpot == null) return;
 
         // Double check availability 

@@ -1,10 +1,10 @@
 package InterfaceLibrary;
 import Model.Vehicle.VehicleType;
 
-public class ParkingSpot {
+public class ParkingSpotInterface {
 
 
-    public ParkingSpot(){};
+    public ParkingSpotInterface(){};
 
     public enum SpotType {
         COMPACT,
@@ -16,11 +16,34 @@ public class ParkingSpot {
     private String spotID;
     private SpotType type;
     private boolean isOccupied;
+    private String reservedForPlate;
+    private String currentVehiclePlate;
+    private String floorId;
+    private String status;
+    
 
-    public ParkingSpot(String spotID, SpotType type) {
+
+    public ParkingSpotInterface(String spotID, SpotType type) {
         this.spotID = spotID;
         this.type = type;
         this.isOccupied = false;
+    }
+
+
+    public String getReservedForPlate(){
+        return reservedForPlate;
+    }
+
+    public String getCurrentVehiclePlate(){
+        return currentVehiclePlate;
+    }
+
+    public String getFloorId(){
+        return floorId;
+    }
+
+    public String getStatus(){
+        return status;
     }
 
     public boolean isAvailableFor(VehicleType vType) {
@@ -62,18 +85,22 @@ public class ParkingSpot {
     }
 
 
-   
-  
+    public void setDetails(String reservedForPlate, String currentVehiclePlate, String floorId, String status){
+        this.reservedForPlate = reservedForPlate;
+        this.currentVehiclePlate = currentVehiclePlate;
+        this.floorId = floorId;
+        this.status = status;
+        
+    }
 
+
+    public String getDetails(){
+        String details = "Floor ID: " + floorId + "\n" +
+                         "Status: " + status + "\n" +
+                         "Reserved For Plate: " + (reservedForPlate != null ? reservedForPlate : "N/A") + "\n" +
+                         "Current Vehicle Plate: " + (currentVehiclePlate != null ? currentVehiclePlate : "N/A");
+        return details;
+    }
     
-
-
-    
-
-
-
-
-
-
     
 }

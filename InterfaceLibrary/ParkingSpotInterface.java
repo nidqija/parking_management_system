@@ -20,6 +20,7 @@ public class ParkingSpotInterface {
     private String currentVehiclePlate;
     private String floorId;
     private String status;
+    private float hourlyRate;
     
 
 
@@ -44,6 +45,10 @@ public class ParkingSpotInterface {
 
     public String getStatus(){
         return status;
+    }
+
+    public float getHourlyRate(){
+        return hourlyRate;
     }
 
     public boolean isAvailableFor(VehicleType vType) {
@@ -85,11 +90,17 @@ public class ParkingSpotInterface {
     }
 
 
-    public void setDetails(String reservedForPlate, String currentVehiclePlate, String floorId, String status){
+    public float CalculateRevenue(int hoursParked){
+        return hoursParked * hourlyRate;
+    }
+
+
+    public void setDetails(String reservedForPlate, String currentVehiclePlate, String floorId, String status , String hourlyRate){
         this.reservedForPlate = reservedForPlate;
         this.currentVehiclePlate = currentVehiclePlate;
         this.floorId = floorId;
         this.status = status;
+        this.hourlyRate = (hourlyRate != null && !hourlyRate.isEmpty()) ? Float.parseFloat(hourlyRate) : 0;
         
     }
 
@@ -98,9 +109,10 @@ public class ParkingSpotInterface {
         String details = "Floor ID: " + floorId + "\n" +
                          "Status: " + status + "\n" +
                          "Reserved For Plate: " + (reservedForPlate != null ? reservedForPlate : "N/A") + "\n" +
-                         "Current Vehicle Plate: " + (currentVehiclePlate != null ? currentVehiclePlate : "N/A");
+                         "Current Vehicle Plate: " + (currentVehiclePlate != null ? currentVehiclePlate : "N/A") + "\n" +
+                         "Hourly Rate: RM " + hourlyRate ;
         return details;
     }
-    
+
     
 }

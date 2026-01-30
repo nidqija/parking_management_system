@@ -28,7 +28,8 @@ public class ParkingSpot {
         rs.getString("reserved_for_plate"),
         rs.getString("current_vehicle_plate"),
         rs.getString("floor_id"),
-        rs.getString("status")
+        rs.getString("status"),
+        rs.getString("hourly_rate")
     );
 
     // 3. Use the object's built-in display logic

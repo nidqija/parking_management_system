@@ -5,7 +5,7 @@ import Model.Admin;
 import java.awt.*;
 import javax.swing.*;
 
-public class AdminPanel {
+public class AdminPanel extends JPanel {
 
 
     private void styleButton(JButton button, Dimension size) {

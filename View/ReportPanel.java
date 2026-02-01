@@ -2,6 +2,6 @@ package View;
 
 import javax.swing.JPanel;
 
-public class ExitPanel extends JPanel {
+public class ReportPanel extends JPanel {
     
 }

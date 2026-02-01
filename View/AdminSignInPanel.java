@@ -3,7 +3,7 @@ import Model.Admin;
 import java.awt.*;
 import javax.swing.*;
 
-public class AdminSignInPanel extends JFrame {
+public class AdminSignInPanel  extends JPanel{
 
 
     public AdminSignInPanel(){

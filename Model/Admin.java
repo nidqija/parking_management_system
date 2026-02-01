@@ -1,4 +1,7 @@
 package Model;
+import java.util.ArrayList;
+
+import Controller.ParkingComplex;
 import Data.Sqlite;
 import InterfaceLibrary.UserInfo;
 import View.AdminPanel;
@@ -10,6 +13,7 @@ public class Admin implements UserInfo  {
     private String username;
     private String password;
     private Sqlite sqlite;
+    
 
 
  // constructor to initialize Admin object //
@@ -71,4 +75,22 @@ public class Admin implements UserInfo  {
     public String getPassword(){
         return password;
     }
+
+    public ArrayList<Integer> getParkingComplexStatus(){
+        // Placeholder for actual occupancy status retrieval logic in floors and parking complex
+        ArrayList<Integer> ParkingComplexStatus = new ArrayList<>();
+        ParkingComplex parkingComplex = new ParkingComplex();
+        int availableSpots = parkingComplex.getTotalAvailableSpots();
+        int occupiedSpots = parkingComplex.getTotalOccupiedSpots();
+        int totalSpots = availableSpots + occupiedSpots;
+        ParkingComplexStatus.add(availableSpots);
+        ParkingComplexStatus.add(occupiedSpots);
+        ParkingComplexStatus.add(totalSpots);
+        return ParkingComplexStatus;
+    }
+
+
+
+
+    
 }

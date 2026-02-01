@@ -1,4 +1,6 @@
+
 package View;
+import Controller.ParkingComplex;
 import Model.Admin;
 import java.awt.*;
 import javax.swing.*;
@@ -47,8 +49,25 @@ public class AdminPanel {
         JLabel label = new JLabel("Admin Panel - Manage Parking System");
         label.setFont(new Font("Arial", Font.BOLD, 24));
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
-        verticalMenu.add(label);
 
+        ParkingComplex parkingComplex = new ParkingComplex();
+        JLabel occupancyRate = new JLabel(String.format("Occupancy Rate: %.2f%%", parkingComplex.complexOccupancyRate()));
+        occupancyRate.setFont(new Font("Arial", Font.PLAIN, 16));
+        occupancyRate.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel availableparking = new JLabel("Available Parking Spots: " + parkingComplex.getTotalAvailableSpots());
+        availableparking.setFont(new Font("Arial", Font.PLAIN, 16));
+        availableparking.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel occupiedparking = new JLabel("Occupied Parking Spots: " + parkingComplex.getTotalOccupiedSpots());
+        occupiedparking.setFont(new Font("Arial", Font.PLAIN, 16));
+        occupiedparking.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+
+        verticalMenu.add(label);
+        verticalMenu.add(availableparking);
+        verticalMenu.add(occupiedparking);
+        verticalMenu.add(occupancyRate);
         
 
 //================================================================================== //

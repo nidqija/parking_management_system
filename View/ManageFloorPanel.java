@@ -9,7 +9,7 @@ public class ManageFloorPanel extends JFrame {
     private int floorId;
     private int totalFloor = 3;
 
-    public ManageFloorPanel(int floorId) {
+    public ManageFloorPanel(MainFrame mainFrame, int floorId) {
 
         // ============================= Frame Setup
         // ===================================== //
@@ -67,8 +67,8 @@ public class ManageFloorPanel extends JFrame {
 
             // floor button action listener , will take to the selected floor panel page
             floorButton.addActionListener(e -> {
-                new ManageFloorPanel(selectedFloor);
-                dispose();
+                 mainFrame.showManageFloor(selectedFloor);
+                 setVisible(false);
             });
 
             // add button to the row
@@ -77,8 +77,7 @@ public class ManageFloorPanel extends JFrame {
 
         JButton backButton = new JButton("Back to Admin Panel");
         backButton.addActionListener(e -> {
-            new AdminPanel();
-            dispose();
+            mainFrame.showPage("AdminPanel");
         });
         panel.add(buttonRow);
         panel.add(Box.createRigidArea(new Dimension(0, 20)));
@@ -107,8 +106,5 @@ public class ManageFloorPanel extends JFrame {
         setVisible(true);
     }
 
-    public static void main(String[] args) {
-        new ManageFloorPanel(1);
-
-    }
+    
 }

@@ -75,6 +75,15 @@ public class Sqlite {
                             ");";
                     stmt.execute(tb_spots);
 
+                    // --- Table 1: Fine_Settings --- //
+                    // Stores fine amounts for different violation types
+                    String tb_fine_settings = "CREATE TABLE IF NOT EXISTS Fine_Settings (" +
+                            "fine_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                            "violation_type TEXT NOT NULL, " +
+                            "amount FLOAT NOT NULL" +
+                            ");";
+                    stmt.execute(tb_fine_settings);
+
                     // --- Table 5: Tickets (Visit History) ---
                     // 'entry_time' stored as ISO8601 String
                     String tb_tickets = "CREATE TABLE IF NOT EXISTS Tickets (" +
@@ -216,8 +225,14 @@ public class Sqlite {
                     stmt.execute("INSERT OR IGNORE INTO Fines_Ledger (license_plate, violation_type, amount, status, created_at) " +
                                  "VALUES ('BAD-5555', 'OVERSTAY', 50.00, 'UNPAID', datetime('now', '-5 days'));");
 
-                    stmt.execute("INSERT INTO Admins (username, password) " +
+                    stmt.execute("INSERT OR IGNORE INTO Admins (username, password) " +
                                  "VALUES ('raziq', 'raziq123');");
+                    
+
+                    stmt.execute("INSERT INTO fine_settings (violation_type, amount) " +
+                                 "VALUES ('OVERSTAY', 50.00), ('ILLEGAL_PARKING', 75.00), ('NO_PAYMENT', 100.00);");
+
+                    
 
                     System.out.println("Sample data inserted successfully.");
                 

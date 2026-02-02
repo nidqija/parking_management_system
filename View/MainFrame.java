@@ -1,19 +1,8 @@
 package View;
 
-import java.awt.CardLayout;
-import java.awt.Component;
-import InterfaceLibrary.ParkingGroup;
-import InterfaceLibrary.ParkingSpotInterface;
-import javax.swing.*;
 import InterfaceLibrary.Navigator;
 import InterfaceLibrary.ParkingGroup;
-import Controller.ParkingComplex;
-import Controller.Floors;
-import View.AdminPanel;
-import View.ManageFloorPanel;
-import View.ReportPanel;
-import View.EntryPanel;
-import View.ExitPanel;
+import java.awt.CardLayout;
 import javax.swing.*;
 
 
@@ -65,7 +54,7 @@ public class MainFrame extends JFrame implements Navigator {
         if (pageName.equals("AdminPanel")) {
             AdminPanel adminPanel = new AdminPanel(this);
             mainPanel.add(adminPanel, "AdminPanel");
-        }g
+        }
 
         if (pageName.equals("AdminSignInPage")) {
             AdminSignInPanel adminSignInPanel = new AdminSignInPanel(this);
@@ -103,4 +92,3 @@ public class MainFrame extends JFrame implements Navigator {
 
 
 }}
-

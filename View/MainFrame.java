@@ -47,6 +47,12 @@ public class MainFrame extends JFrame implements Navigator {
         showPage(pageName);
     }
 
+    //show different floors func
+    public void showManageFloor(int floorId) {
+    ManageFloorPanel panel = new ManageFloorPanel(this, floorId);
+    mainPanel.add(panel, "ManageFloorPanel");
+    }
+
     
     public void showPage(String pageName){
 
@@ -54,15 +60,20 @@ public class MainFrame extends JFrame implements Navigator {
             Homepage homepage = new Homepage(this);
             mainPanel.add(homepage, "Homepage");
         }
+        
 
         if (pageName.equals("AdminPanel")) {
             AdminPanel adminPanel = new AdminPanel(this);
             mainPanel.add(adminPanel, "AdminPanel");
-        }
+        }g
 
         if (pageName.equals("AdminSignInPage")) {
             AdminSignInPanel adminSignInPanel = new AdminSignInPanel(this);
             mainPanel.add(adminSignInPanel, "AdminSignInPage");
+        }
+
+        if (pageName.equals("ManageFloorPanel")) {
+            showManageFloor(1);
         }
 
         if (pageName.equals("EntryPanel")) {
@@ -75,10 +86,6 @@ public class MainFrame extends JFrame implements Navigator {
             //mainPanel.add(exitPanel, "ExitPanel");
         }
 
-        if(pageName.equals("ManageFloorPanel")) {
-            ManageFloorPanel manageFloorPanel = new ManageFloorPanel(this,1);
-            mainPanel.add(manageFloorPanel, "ManageFloorPanel");
-        }
 
         if(pageName.equals("ManageFines")) {
             ManageFines manageFines = new ManageFines();

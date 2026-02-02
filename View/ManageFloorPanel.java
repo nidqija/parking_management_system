@@ -67,8 +67,8 @@ public class ManageFloorPanel extends JFrame {
 
             // floor button action listener , will take to the selected floor panel page
             floorButton.addActionListener(e -> {
-                mainFrame.showPage("ManageFloorPanel" + selectedFloor);
-                dispose();
+                 mainFrame.showManageFloor(selectedFloor);
+                 setVisible(false);
             });
 
             // add button to the row

@@ -43,7 +43,7 @@ public class MainFrame extends JFrame implements Navigator {
         
        // mainPanel.add(entryPanel, "EntryPage");
         mainPanel.add(adminSignInPanel, "AdminSignInPage");
-       // mainPanel.add(homepage, "Homepage");
+        mainPanel.add(homepage, "Homepage");
       
         
 

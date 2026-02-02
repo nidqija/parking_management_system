@@ -6,10 +6,12 @@ import Data.Sqlite;
 import InterfaceLibrary.UserInfo;
 import View.AdminPanel;
 import View.AdminSignInPanel;
+import View.MainFrame;
 
 public class Admin implements UserInfo  {
 
   // attributes for admin username and password //
+    private MainFrame mainFrame;
     private String username;
     private String password;
     private Sqlite sqlite;
@@ -18,9 +20,10 @@ public class Admin implements UserInfo  {
 
  // constructor to initialize Admin object //
 
-    public  Admin(String username, String password){
+    public  Admin(String username, String password, MainFrame mainFrame) {
        this.username = username;
        this.password = password;
+       this.mainFrame = mainFrame;
        this.sqlite = new Sqlite();
     }
 
@@ -51,7 +54,8 @@ public class Admin implements UserInfo  {
     public void executeSignIn() {
         if (validateSignin()) {
             System.out.println("Sign-in successful! Redirecting to Admin Panel...");
-            new AdminPanel();
+            mainFrame.showPage("AdminPanel");
+            
         } else {
             System.out.println("Invalid username or password. Please try again.");
         }
@@ -64,7 +68,7 @@ public class Admin implements UserInfo  {
     public void signout() {
        this.username = null;
        this.password = null;
-       new AdminSignInPanel();
+    
     }
 
 

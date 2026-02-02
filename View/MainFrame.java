@@ -33,8 +33,6 @@ public class MainFrame extends JFrame implements Navigator {
         JTabbedPane tabbedPane = new JTabbedPane();
 
         Homepage homepage = new Homepage(this);
-       
-        
         mainPanel.add(homepage, "Homepage");
         add(mainPanel);
 
@@ -52,28 +50,33 @@ public class MainFrame extends JFrame implements Navigator {
     
     public void showPage(String pageName){
 
+        if (pageName.equals("Homepage")) {
+            Homepage homepage = new Homepage(this);
+            mainPanel.add(homepage, "Homepage");
+        }
+
         if (pageName.equals("AdminPanel")) {
-            AdminPanel adminPanel = new AdminPanel();
+            AdminPanel adminPanel = new AdminPanel(this);
             mainPanel.add(adminPanel, "AdminPanel");
         }
 
         if (pageName.equals("AdminSignInPage")) {
-            AdminSignInPanel adminSignInPanel = new AdminSignInPanel();
+            AdminSignInPanel adminSignInPanel = new AdminSignInPanel(this);
             mainPanel.add(adminSignInPanel, "AdminSignInPage");
         }
 
         if (pageName.equals("EntryPanel")) {
-            EntryPanel entryPanel = new EntryPanel(pg);
+            EntryPanel entryPanel = new EntryPanel(this,pg);
             mainPanel.add(entryPanel, "EntryPanel");
         }
 
         if (pageName.equals("ExitPanel")) {
-            ExitPanel exitPanel = new ExitPanel();
-            mainPanel.add(exitPanel, "ExitPanel");
+            //ExitPanel exitPanel = new ExitPanel(this);
+            //mainPanel.add(exitPanel, "ExitPanel");
         }
 
         if(pageName.equals("ManageFloorPanel")) {
-            ManageFloorPanel manageFloorPanel = new ManageFloorPanel(1);
+            ManageFloorPanel manageFloorPanel = new ManageFloorPanel(this,1);
             mainPanel.add(manageFloorPanel, "ManageFloorPanel");
         }
 
@@ -83,8 +86,8 @@ public class MainFrame extends JFrame implements Navigator {
         }
 
         if(pageName.equals("ReportPanel")) {
-            ReportPanel reportPanel = new ReportPanel();
-            mainPanel.add(reportPanel, "ReportPanel");
+            //ReportPanel reportPanel = new ReportPanel(this);
+            //mainPanel.add(reportPanel, "ReportPanel");
         }
 
 

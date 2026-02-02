@@ -16,14 +16,11 @@ public class AdminPanel extends JPanel {
     }
 
 
-    public AdminPanel() {   
+    public AdminPanel(MainFrame mainFrame) {   
 
 // ============================= Frame Setup ===================================== //
 
-        JFrame frame = new JFrame("Admin Panel");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800, 700);
-        frame.setLocationRelativeTo(null);
+        
 
 //================================================================================== //
 
@@ -31,7 +28,7 @@ public class AdminPanel extends JPanel {
 // ============================= Main Panel ====================================== //
 
         JPanel panel = new JPanel(new GridBagLayout());
-        frame.add(panel);
+        
 
 
         Box verticalMenu = Box.createVerticalBox();
@@ -83,7 +80,7 @@ public class AdminPanel extends JPanel {
        verticalMenu.add(Box.createRigidArea(new Dimension(250, 20)));
 
          manageSpots.addActionListener(e -> {
-              new ManageFloorPanel(1);
+              mainFrame.showPage("ManageFloorPanel" + 1);
          });
 
        JButton manageFines = new JButton("Manage Parking Fines");
@@ -113,8 +110,9 @@ public class AdminPanel extends JPanel {
 //================================================================================== //
 
        signOutButton.addActionListener(e -> {
-          Admin admin = new Admin("", "");
+          Admin admin = new Admin("", "", mainFrame);
           admin.signout();
+          mainFrame.showPage("Homepage");
        });
 
 
@@ -123,17 +121,14 @@ public class AdminPanel extends JPanel {
 
 
 
-// ============================= Make Frame Visible ============================= //
+// ============================= Make panel Visible ============================= //
 
-        frame.setVisible(true);
+    add(panel);
 
 //================================================================================== //
     
 }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new AdminPanel());
-    }
 
 
    

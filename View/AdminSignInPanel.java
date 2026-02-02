@@ -1,12 +1,13 @@
 package View;
 import Model.Admin;
+import View.MainFrame;
 import java.awt.*;
 import javax.swing.*;
 
 public class AdminSignInPanel extends JPanel{
 
 
-    public AdminSignInPanel(){
+    public AdminSignInPanel(MainFrame mainFrame) {
         
 
     
@@ -52,15 +53,21 @@ public class AdminSignInPanel extends JPanel{
         signInButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(signInButton);
 
+        JButton backButton = new JButton("Back");
+        backButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(backButton);
+
+
         panel.add(Box.createVerticalStrut(20)); 
 
       
 
 
 // ============================== Button Actions ================================= //
+        backButton.addActionListener(e -> mainFrame.showPage("Homepage"));
 
         signInButton.addActionListener(e->{
-           Admin admin = new Admin(usernameField.getText(), passwordField.getText());
+           Admin admin = new Admin(usernameField.getText(), passwordField.getText(), mainFrame);
            admin.executeSignIn();
         
         });
@@ -72,7 +79,5 @@ public class AdminSignInPanel extends JPanel{
 
        
     }
-    public static void main(String[] args) {
-        new AdminSignInPanel();
-    }
+   
 }

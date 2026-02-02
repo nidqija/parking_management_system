@@ -2,7 +2,8 @@ package View;
 
 import java.awt.CardLayout;
 import java.awt.Component;
-
+import InterfaceLibrary.ParkingGroup;
+import InterfaceLibrary.ParkingSpotInterface;
 import javax.swing.*;
 import InterfaceLibrary.Navigator;
 import InterfaceLibrary.ParkingGroup;
@@ -20,6 +21,8 @@ public class MainFrame extends JFrame implements Navigator {
     
     private CardLayout cardLayout = new CardLayout();
     private JPanel mainPanel = new JPanel(cardLayout);
+    private ParkingGroup pg = new ParkingGroup();
+
     public MainFrame() {
         
         setTitle("Parking Management System");
@@ -29,29 +32,15 @@ public class MainFrame extends JFrame implements Navigator {
 
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        Homepage homepage = new Homepage();
-        AdminSignInPanel adminSignInPanel = new AdminSignInPanel();
-       // EntryPanel entryPanel = new EntryPanel();
+        Homepage homepage = new Homepage(this);
+       
         
-    
-      
-    
-        
-
-      
-        
-        
-       // mainPanel.add(entryPanel, "EntryPage");
-        mainPanel.add(adminSignInPanel, "AdminSignInPage");
         mainPanel.add(homepage, "Homepage");
-      
-        
-
         add(mainPanel);
 
 
         setTitle("Parking Management System");
-        setSize(800 , 800);
+        setSize(800 , 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
     
@@ -66,6 +55,16 @@ public class MainFrame extends JFrame implements Navigator {
         if (pageName.equals("AdminPanel")) {
             AdminPanel adminPanel = new AdminPanel();
             mainPanel.add(adminPanel, "AdminPanel");
+        }
+
+        if (pageName.equals("AdminSignInPage")) {
+            AdminSignInPanel adminSignInPanel = new AdminSignInPanel();
+            mainPanel.add(adminSignInPanel, "AdminSignInPage");
+        }
+
+        if (pageName.equals("EntryPanel")) {
+            EntryPanel entryPanel = new EntryPanel(pg);
+            mainPanel.add(entryPanel, "EntryPanel");
         }
 
         if (pageName.equals("ExitPanel")) {

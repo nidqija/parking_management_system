@@ -3,14 +3,11 @@ import Model.Admin;
 import java.awt.*;
 import javax.swing.*;
 
-public class AdminSignInPanel  extends JPanel{
+public class AdminSignInPanel extends JPanel{
 
 
     public AdminSignInPanel(){
-        JFrame frame = new JFrame("Admin Sign In");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800, 700);
-        frame.setLocationRelativeTo(null);
+        
 
     
         JPanel panel = new JPanel();
@@ -65,16 +62,15 @@ public class AdminSignInPanel  extends JPanel{
         signInButton.addActionListener(e->{
            Admin admin = new Admin(usernameField.getText(), passwordField.getText());
            admin.executeSignIn();
-           frame.dispose();
+        
         });
 
 
        
-
+        add(panel);
         
 
-        frame.add(panel);
-        frame.setVisible(true);
+       
     }
     public static void main(String[] args) {
         new AdminSignInPanel();

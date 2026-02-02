@@ -44,15 +44,15 @@ A standalone GUI application designed for university parking lot management. Thi
     - Real-time occupancy rate (%) and total revenue counter.
     - View list of all currently parked vehicles.
 
-- [ ] **Fine Configuration**
+- [ ] **Fine Configuration** 
     - Option to select the active fine scheme:
         - **Option A:** Fixed Fine (RM 50).
         - **Option B:** Progressive (RM 50 -> RM 100 -> RM 150 -> RM 200).
         - **Option C:** Hourly (RM 20/hr overstay).
-    - *Note: Applied to new entries only.*
+    - *Note: Applied to new entries only.* 
 
-- [ ] **Fine Management**
-    - View/Edit outstanding fines linked to specific license plates.
+- [ ] **Fine Management** 
+    - View/Edit outstanding fines linked to specific license plates. 
 
 ### 3. Reporting Panel (Analytics Interface)
 *Generates data summaries for administrative review.*

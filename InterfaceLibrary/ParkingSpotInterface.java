@@ -91,7 +91,7 @@ public class ParkingSpotInterface {
 
 
     public float CalculateRevenue(int hoursParked){
-        return hoursParked * hourlyRate;
+        return hoursParked * this.hourlyRate; 
     }
 
 
@@ -106,11 +106,15 @@ public class ParkingSpotInterface {
 
 
     public String getDetails(){
+
+        int testHours = 2; 
+        float totalRevenue = CalculateRevenue(testHours);
+
         String details = "Floor ID: " + floorId + "\n" +
                          "Status: " + status + "\n" +
                          "Reserved For Plate: " + (reservedForPlate != null ? reservedForPlate : "N/A") + "\n" +
                          "Current Vehicle Plate: " + (currentVehiclePlate != null ? currentVehiclePlate : "N/A") + "\n" +
-                         "Hourly Rate: RM " + hourlyRate ;
+                         "Hourly Rate: RM " + totalRevenue ;
         return details;
     }
 

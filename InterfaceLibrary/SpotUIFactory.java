@@ -14,7 +14,6 @@ public class SpotUIFactory {
     private Sqlite sqlite = new Sqlite();
 
 
-    
      // Method to load parking spots into a given JPanel grid for a specific floor //
 
        public void loadParkingSpots(JPanel grid , int floorId){

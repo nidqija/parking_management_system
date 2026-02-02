@@ -1,7 +1,8 @@
 package View;
-import javax.swing.JFrame;
+import Controller.ParkingFine;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 
 public class ManageFines extends JPanel {
     public ManageFines() {
@@ -14,6 +15,21 @@ public class ManageFines extends JPanel {
 
         JLabel label = new JLabel("Manage Fines Panel");
         add(label);
+
+
+        ParkingFine parkingFine = ParkingFine.getInstance();
+        parkingFine.refreshFineRates();
+
+        add(new JLabel("Overstay Night RM50"));
+        JTextArea overstayArea = new JTextArea("Current Rate: RM" + parkingFine.getFineAmount("Illegal_Parking"));
+        add(overstayArea);
+
+       
+
+      
+
+
+
     }
 
 

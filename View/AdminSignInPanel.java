@@ -1,16 +1,14 @@
 package View;
 import Model.Admin;
+import View.MainFrame;
 import java.awt.*;
 import javax.swing.*;
 
-public class AdminSignInPanel extends JFrame {
+public class AdminSignInPanel extends JPanel{
 
 
-    public AdminSignInPanel(){
-        JFrame frame = new JFrame("Admin Sign In");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800, 700);
-        frame.setLocationRelativeTo(null);
+    public AdminSignInPanel(MainFrame mainFrame) {
+        
 
     
         JPanel panel = new JPanel();
@@ -55,28 +53,31 @@ public class AdminSignInPanel extends JFrame {
         signInButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(signInButton);
 
+        JButton backButton = new JButton("Back");
+        backButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(backButton);
+
+
         panel.add(Box.createVerticalStrut(20)); 
 
       
 
 
 // ============================== Button Actions ================================= //
+        backButton.addActionListener(e -> mainFrame.showPage("Homepage"));
 
         signInButton.addActionListener(e->{
-           Admin admin = new Admin(usernameField.getText(), passwordField.getText());
+           Admin admin = new Admin(usernameField.getText(), passwordField.getText(), mainFrame);
            admin.executeSignIn();
-           frame.dispose();
+        
         });
 
 
        
-
+        add(panel);
         
 
-        frame.add(panel);
-        frame.setVisible(true);
+       
     }
-    public static void main(String[] args) {
-        new AdminSignInPanel();
-    }
+   
 }

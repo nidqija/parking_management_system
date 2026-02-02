@@ -20,7 +20,7 @@ public class EntryPanel extends JPanel {
     
     private ParkingGroup parkingGroup; 
 
-    public EntryPanel(ParkingGroup pg) {
+    public EntryPanel(MainFrame mainFrame, ParkingGroup pg) {
         this.parkingGroup = pg;
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -136,14 +136,5 @@ cmbType.addActionListener(e -> {
         JOptionPane.showMessageDialog(this, "Ticket Generated & Saved to Database!");
     }
     
-    // Main method for testing
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("Parking Entry Panel");
-        ParkingGroup pg = new ParkingGroup(); 
-        EntryPanel entryPanel = new EntryPanel(pg);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(500, 400);
-        frame.add(entryPanel);
-        frame.setVisible(true);
-    }
+   
 }

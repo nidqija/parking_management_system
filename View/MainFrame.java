@@ -40,6 +40,7 @@ public class MainFrame extends JFrame implements Navigator {
     public void showManageFloor(int floorId) {
     ManageFloorPanel panel = new ManageFloorPanel(this, floorId);
     mainPanel.add(panel, "ManageFloorPanel");
+    cardLayout.show(mainPanel, "ManageFloorPanel");
     }
 
     
@@ -63,6 +64,7 @@ public class MainFrame extends JFrame implements Navigator {
 
         if (pageName.equals("ManageFloorPanel")) {
             showManageFloor(1);
+            return;
         }
 
         if (pageName.equals("EntryPanel")) {

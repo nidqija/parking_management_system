@@ -80,7 +80,7 @@ public class AdminPanel extends JPanel {
        verticalMenu.add(Box.createRigidArea(new Dimension(250, 20)));
 
          manageSpots.addActionListener(e -> {
-              mainFrame.showManageFloor(1);
+              mainFrame.showPage("ManageFloorPanel");
          });
 
        JButton manageFines = new JButton("Manage Parking Fines");

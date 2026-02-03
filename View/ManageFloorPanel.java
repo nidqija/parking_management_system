@@ -4,20 +4,17 @@ import Controller.Floors;
 import java.awt.*;
 import javax.swing.*;
 
-public class ManageFloorPanel extends JFrame {
+public class ManageFloorPanel extends JPanel {
 
     private int floorId;
     private int totalFloor = 3;
 
     public ManageFloorPanel(MainFrame mainFrame, int floorId) {
 
+        
         // ============================= Frame Setup
         // ===================================== //
         this.floorId = floorId;
-        setTitle("Manage Floor Panel");
-        setSize(800, 700);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         // ==================================================================================
         // //
@@ -59,16 +56,13 @@ public class ManageFloorPanel extends JFrame {
             int selectedFloor = i + 1;
             JButton floorButton = new JButton("Floor " + (i + 1));
 
-            // Highlight current floor button based on floor id
             if (selectedFloor == floorId) {
                 floorButton.setBackground(Color.LIGHT_GRAY);
                 floorButton.setEnabled(false);
             }
 
-            // floor button action listener , will take to the selected floor panel page
             floorButton.addActionListener(e -> {
-                 mainFrame.showManageFloor(selectedFloor);
-                 setVisible(false);
+               mainFrame.showManageFloor(selectedFloor);
             });
 
             // add button to the row
@@ -103,6 +97,7 @@ public class ManageFloorPanel extends JFrame {
         panel.add(scrollPane);
 
         add(panel);
+
         setVisible(true);
     }
 

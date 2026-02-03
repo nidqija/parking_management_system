@@ -9,7 +9,6 @@ public class ParkingFine {
     
     private static ParkingFine instance;
     private Map<String, Double> fineRates = new HashMap<>();
-    private final String url = "jdbc:sqlite:Data/Parking_Management_System.db";
 
 
 
@@ -34,6 +33,11 @@ public class ParkingFine {
     }
 
    
+    }
+
+
+    public Map<String, Double> getFineRatesMap() {
+        return fineRates;
     }
 
 

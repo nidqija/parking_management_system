@@ -77,7 +77,7 @@ public class MainFrame extends JFrame implements Navigator {
 
 
         if(pageName.equals("ManageFines")) {
-            ManageFines manageFines = new ManageFines();
+            ManageFines manageFines = new ManageFines(this);
             mainPanel.add(manageFines, "ManageFines");
         }
 

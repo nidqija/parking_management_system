@@ -2,6 +2,8 @@ package View;
 
 import Controller.ParkingFine;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
@@ -36,6 +38,17 @@ public class ManageFines extends JPanel {
         add(header, BorderLayout.NORTH);
         add(new JScrollPane(fineTable), BorderLayout.CENTER);
 
+        fineTable.addMouseListener(new MouseAdapter(){
+            @Override
+            public void mouseClicked( MouseEvent e){
+                  if (e.getClickCount() == 2) {
+                        handleUpdate();
+                  }
+            }
+        });
+
+        
+
 
         JButton backButton = new JButton("Back to Admin Panel");
         backButton.addActionListener(e -> {
@@ -46,8 +59,8 @@ public class ManageFines extends JPanel {
     }
 
 
-   
 
+// ============================= Helper Methods =========================================== //
 
     private void refreshTableData() {
         tableModel.setRowCount(0); 
@@ -55,6 +68,33 @@ public class ManageFines extends JPanel {
             tableModel.addRow(new Object[]{type, String.format("%.2f", rate)});
         });
         
+    }
+
+    private void handleUpdate(){
+        int selectedRow = fineTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a fine to update.", "No Selection", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String fineType = (String) tableModel.getValueAt(selectedRow, 0);
+        String currentRateStr = (String) tableModel.getValueAt(selectedRow, 1);
+
+        String newRateStr = JOptionPane.showInputDialog(this, "Enter new rate for " + fineType + " (Current: RM " + currentRateStr + "):", "Update Fine Rate", JOptionPane.PLAIN_MESSAGE);
+        
+        if (newRateStr != null) {
+            try {
+                double newRate = Double.parseDouble(newRateStr);
+                if (newRate < 0) {
+                    throw new NumberFormatException();
+                }
+                parkingFine.updateRate(fineType, newRate);
+                refreshTableData();
+                JOptionPane.showMessageDialog(this, "Fine rate updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Please enter a valid positive number for the rate.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
 

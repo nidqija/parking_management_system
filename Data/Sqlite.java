@@ -247,10 +247,10 @@ public class Sqlite {
                                  "VALUES ('raziq', 'raziq123');");
                     
 
-                 
+                    stmt.execute("DELETE FROM fine_settings");
 
                     stmt.execute("INSERT OR IGNORE INTO fine_settings (violation_type, amount) " +
-                                 "VALUES ('OVERSTAY', 50.00), ('ILLEGAL_PARKING', 75.00), ('NO_PAYMENT', 100.00);");
+                                 "VALUES ('FIXED', 50.00), ('PROGRESSIVE', 50.00), ('HOURLY', 20.00);");
 
                     
 

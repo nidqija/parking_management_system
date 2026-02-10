@@ -22,6 +22,13 @@ public class Vehicle {
         registerInDB();
     }
 
+
+    public Vehicle(String plateNumber, VehicleType type, boolean isExisting) {
+    this.plateNumber = plateNumber;
+    this.type = type;
+   
+   }
+
     public String getPlateNumber() { return plateNumber; }
     public VehicleType getType() { return type; }
 

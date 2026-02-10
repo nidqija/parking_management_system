@@ -15,6 +15,8 @@ public class ReportPanel extends JPanel {
       private JTable vehicleTable;
       private DefaultTableModel tableModel;
 
+      
+
        private void loadVehicleData() {
        tableModel.setRowCount(0); // clear existing rows
 
@@ -25,17 +27,19 @@ public class ReportPanel extends JPanel {
                     i + 1,
                     v.getPlateNumber(),
                     v.getType(),
-                    v.getTicketNumber() != null ? v.getTicketNumber() : "",
-                    v.getSpotID() != null ? v.getSpotID() : "",
-                    v.getEntryTime() != null ? v.getEntryTime().toString() : "",
-                    v.getExitTime() != null ? v.getExitTime().toString() : "",
-                    v.getPaymentStatus() != null ? v.getPaymentStatus() : ""
+                    v.getTicketNumber() != null ? v.getTicketNumber() : "NULL",
+                    v.getSpotID() != null ? v.getSpotID() : "NULL",
+                    v.getEntryTime() != null ? v.getEntryTime().toString() : "NULL",
+                    v.getExitTime() != null ? v.getExitTime().toString() : "NULL",
+                    v.getPaymentStatus() != null ? v.getPaymentStatus() : "NULL"
                     //ternary operator
                     //condition ? value_if_true : value_if_false
             });
             i++; //increment
         }
     }
+
+    
     
 
 
@@ -49,6 +53,8 @@ public class ReportPanel extends JPanel {
         JLabel label = new JLabel("Report Panel - Parking Management System");
         label.setFont(new Font("Arial", Font.BOLD, 24));
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
 
@@ -96,20 +102,20 @@ public class ReportPanel extends JPanel {
 
       
 
-      String[] columnNames = { "Vehicle" ,"Lisence Plate", "Vehicle Type", "Ticket ID", "Parking Spot", "Entry Time", "Exit Time", "Payment Status"};
-
-
-       // Vehicle JTable panel
-
+      String[] vehicleColumn = { "Vehicle" ,"Lisence Plate", "Vehicle Type", "Ticket ID", "Parking Spot", "Entry Time", "Exit Time", "Payment Status"};
       DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
       centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
 
-      tableModel = new DefaultTableModel(columnNames, 0) {
+      tableModel = new DefaultTableModel(vehicleColumn, 0) {
           @Override
           public boolean isCellEditable(int row, int column) {
               return false; // make table non-editable
           }
         };
+
+       // Vehicle JTable panel
+
+      
         // JTable
         vehicleTable = new JTable(tableModel);
         vehicleTable.setFillsViewportHeight(true);
@@ -136,6 +142,29 @@ public class ReportPanel extends JPanel {
       JLabel occupancyLabel = new JLabel("Occupancy Report", SwingConstants.CENTER);
       occupancyLabel.setFont(new Font("Arial", Font.BOLD, 20));
       occupancyPanel.add(occupancyLabel, BorderLayout.CENTER);
+
+      String[] occupancyColumn = { "Floor" ,"Spot Type", "Total Spot", "Occupied", "Available", "Occupancy"};
+      occupancyTableModel = new DefaultTableModel(occupancyColumn, 0) {
+          @Override
+          public boolean isCellEditable(int row, int column) {
+              return false; // make table non-editable
+          }
+        };
+
+        // JTable
+        occupancyTable = new JTable(occupancyTableModel);
+        occupancyTable.setFillsViewportHeight(true);
+        occupancyTable.setRowHeight(25);
+        occupancyTable.setFont(new Font("Arial", Font.PLAIN, 14));
+        occupancyTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 16));
+        occupancyTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); //centers vehicle column
+        // Scroll pane
+        JScrollPane occupancyScrollPane = new JScrollPane(occupancyTable);
+        vehiclePanel.add(scrollPane, BorderLayout.CENTER); 
+
+        loadVehicleData();
+
+
 
       JPanel finesPanel = new JPanel(new BorderLayout());
       JLabel finesLabel = new JLabel("Fines Report", SwingConstants.CENTER);

@@ -89,8 +89,8 @@ public class MainFrame extends JFrame implements Navigator {
         }
 
         if(pageName.equals("ReportPanel")) {
-            //ReportPanel reportPanel = new ReportPanel(this);
-            //mainPanel.add(reportPanel, "ReportPanel");
+            ReportPanel ReportPanel = new ReportPanel(this);
+            mainPanel.add(ReportPanel, "ReportPanel");
         }
 
 

@@ -7,6 +7,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import Model.Vehicle;
+import Controller.Floors;
 
 public class ReportPanel extends JPanel {
 
@@ -14,6 +15,13 @@ public class ReportPanel extends JPanel {
       private JPanel contentPanel;
       private JTable vehicleTable;
       private DefaultTableModel tableModel;
+      private JTable revenueTable;
+      private DefaultTableModel revenueTableModel;
+      private JTable occupancyTable;
+      private DefaultTableModel occupancyTableModel;
+      private JTable finesTable;
+      private DefaultTableModel finesTableModel;
+
 
       
 
@@ -36,6 +44,26 @@ public class ReportPanel extends JPanel {
                     //condition ? value_if_true : value_if_false
             });
             i++; //increment
+        }
+    }
+
+    private void loadOccupancyData() {
+        if (occupancyTableModel == null) return;
+        occupancyTableModel.setRowCount(0);
+        
+        List<Floors> floors = Floors.getFloors();
+        
+        for (Floors f : floors){
+            occupancyTableModel.addRow(new Object[]{
+                    f.getFloorNumber(),
+                    f.getFloorName(),
+                    f.getTotalSpots(f.getFloorNumber()),
+                    f.getOccupiedSpots(f.getFloorNumber()),
+                    f.getAvailableSpots(f.getFloorNumber()),
+                    String.format("%.1f%%", f.floorOccupancyRate(f.getFloorNumber()))
+
+    
+            });
         }
     }
 
@@ -143,7 +171,7 @@ public class ReportPanel extends JPanel {
       occupancyLabel.setFont(new Font("Arial", Font.BOLD, 20));
       occupancyPanel.add(occupancyLabel, BorderLayout.CENTER);
 
-      String[] occupancyColumn = { "Floor" ,"Spot Type", "Total Spot", "Occupied", "Available", "Occupancy"};
+      String[] occupancyColumn = { "Floor", "Floor Name", "Total Spot", "Occupied", "Available", "Occupancy Rate"};
       occupancyTableModel = new DefaultTableModel(occupancyColumn, 0) {
           @Override
           public boolean isCellEditable(int row, int column) {
@@ -157,12 +185,14 @@ public class ReportPanel extends JPanel {
         occupancyTable.setRowHeight(25);
         occupancyTable.setFont(new Font("Arial", Font.PLAIN, 14));
         occupancyTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 16));
-        occupancyTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); //centers vehicle column
+        occupancyTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // center Floor column
+
         // Scroll pane
         JScrollPane occupancyScrollPane = new JScrollPane(occupancyTable);
-        vehiclePanel.add(scrollPane, BorderLayout.CENTER); 
+        occupancyPanel.add(occupancyScrollPane, BorderLayout.CENTER); // add scroll pane to panel
 
-        loadVehicleData();
+        // Load data
+        loadOccupancyData(); // make sure this method fills occupancyTableModel
 
 
 

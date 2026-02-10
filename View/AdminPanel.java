@@ -106,16 +106,24 @@ public class AdminPanel extends JPanel {
 
         
 
-         
-
-
-
+    
 
        JButton viewOutstandingFines = new JButton("View Outstanding Fines");
        styleButton(viewOutstandingFines, btnSize);
        verticalMenu.add(viewOutstandingFines);
 
         verticalMenu.add(Box.createRigidArea(new Dimension(250, 20)));
+
+
+        JButton reportPanel = new JButton("View Report");
+       styleButton(reportPanel, btnSize);
+         verticalMenu.add(reportPanel);
+         verticalMenu.add(Box.createRigidArea(new Dimension(250, 20)));
+        
+         reportPanel.addActionListener(e -> {
+                mainFrame.showPage("ReportPanel");
+            });
+
 
 
        JButton signOutButton = new JButton("Sign Out");

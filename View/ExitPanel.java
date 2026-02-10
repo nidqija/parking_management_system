@@ -22,7 +22,9 @@ public class ExitPanel extends JPanel {
     private JButton btnSearch;
     private JTextArea receiptArea;
     private JComboBox <String> paymentMethodComboBox;
+    private CalculatorFee currentCalculator;
 
+  
 
     public ExitPanel(MainFrame mainFrame) {   
         
@@ -98,8 +100,8 @@ public class ExitPanel extends JPanel {
  
             receiptArea.setText("Calculating total fee for vehicle with plate: " + plate + "...\n\n");
             receiptArea.append("Total fee calculated successfully. Please select payment method and proceed.");
-            CalculatorFee calculator = new CalculatorFee();
-            String result = calculator.processExit(plate);
+            currentCalculator = new CalculatorFee();
+            String result = currentCalculator.processExit(plate);
             receiptArea.append("\n\n" + result);
 
 
@@ -109,23 +111,28 @@ public class ExitPanel extends JPanel {
 
 
         private void handlePayment(){
-            String plate = plateSearchField.getText().trim();
-            String paymentMethod = (String) paymentMethodComboBox.getSelectedItem();
-
-            if(plate.isEmpty()){
-                receiptArea.setText("Please enter a license plate number.");
+            if (currentCalculator == null) {
+                receiptArea.setText("Please calculate the total fee before processing payment.");
                 return;
             }
 
+            String plate = plateSearchField.getText().trim();
+            String paymentMethod = (String) paymentMethodComboBox.getSelectedItem();
 
-            CalculatorFee calculatorFee = new CalculatorFee();
+            boolean paymentSuccess = currentCalculator.processFinalPayment(plate, 
+                                                currentCalculator.getBaseFee() + currentCalculator.getFineAmount() , 
+                                                currentCalculator.getLastHours());
 
-            boolean paymentSuccess = calculatorFee.processFinalPayment(plate, 0.0); // Amount paid is not tracked here
             if (paymentSuccess) {
-                String receipt = calculatorFee.getFinalReceipt(plate, paymentMethod);
-                receiptArea.setText(receipt);
+                String receipt = currentCalculator.getFinalReceipt(plate, paymentMethod, 
+                                                currentCalculator.getBaseFee() + currentCalculator.getFineAmount() , 
+                                                currentCalculator.getFineAmount() , 
+                                                currentCalculator.getBaseFee() , 
+                                                currentCalculator.getLastHours() , 
+                                                currentCalculator.getStartTime());
+                receiptArea.setText("Payment successful!\n\n" + receipt);
             } else {
-                receiptArea.setText("Payment processing failed. Please try again.");
+                receiptArea.setText("Payment failed. Please try again.");
             }
 
             

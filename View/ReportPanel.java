@@ -33,33 +33,66 @@ public class ReportPanel extends JPanel {
           buttonPanel.add(btn);
         }
 
+        vehiclesBtn.addActionListener(e ->
+                cardLayout.show(contentPanel, "Vehicles"));
+
+        revenueBtn.addActionListener(e ->
+                cardLayout.show(contentPanel, "Revenue"));
+
+        occupancyBtn.addActionListener(e ->
+                cardLayout.show(contentPanel, "Occupancy"));
+
+        finesBtn.addActionListener(e ->
+                cardLayout.show(contentPanel, "Fines"));
 
         backBtn.addActionListener(e -> {
            mainFrame.showPage("AdminPanel");
        });
-       //i want the pages to like switch based on what button is pressed to show each report basically
-          
-        cardLayout = new CardLayout();
-        contentPanel = new JPanel(cardLayout);
-
-       JPanel vehiclePanel = new JPanel();
-       JPanel revenuePanel = new JPanel();
-       JPanel occupancyPanel = new JPanel();
-       JPanel finesPanel = new JPanel();
-
-       contentPanel.add(vehiclePanel, "VEHICLES");
-       contentPanel.add(revenuePanel, "REVENUE");
-       contentPanel.add(occupancyPanel, "OCCUPANCY");
-       contentPanel.add(finesPanel, "FINES");
-
-       
-
-
 
         panel.add(label);
         panel.add(buttonPanel);
-        add(contentPanel, BorderLayout.CENTER);
         add(panel);
+
+       //i want the pages to like switch based on what button is pressed to show each report basically
+          
+      cardLayout = new CardLayout();
+      contentPanel = new JPanel(cardLayout);
+
+      JPanel vehiclePanel = new JPanel(new BorderLayout());
+      JLabel vehicleLabel = new JLabel("List of Vehicles", SwingConstants.CENTER);
+      vehicleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+      vehiclePanel.add(vehicleLabel, BorderLayout.CENTER);
+
+
+
+      
+
+
+      JPanel revenuePanel = new JPanel(new BorderLayout());
+      JLabel revenueLabel = new JLabel("Revenue Report", SwingConstants.CENTER);
+      revenueLabel.setFont(new Font("Arial", Font.BOLD, 20));
+      revenuePanel.add(revenueLabel, BorderLayout.CENTER);
+      
+
+      JPanel occupancyPanel = new JPanel(new BorderLayout());
+      JLabel occupancyLabel = new JLabel("Occupancy Report", SwingConstants.CENTER);
+      occupancyLabel.setFont(new Font("Arial", Font.BOLD, 20));
+      occupancyPanel.add(occupancyLabel, BorderLayout.CENTER);
+
+      JPanel finesPanel = new JPanel(new BorderLayout());
+      JLabel finesLabel = new JLabel("Fines Report", SwingConstants.CENTER);
+      finesLabel.setFont(new Font("Arial", Font.BOLD, 20));
+      finesPanel.add(finesLabel, BorderLayout.CENTER);
+
+      contentPanel.add(vehiclePanel, "Vehicles");
+      contentPanel.add(revenuePanel, "Revenue");
+      contentPanel.add(occupancyPanel, "Occupancy");
+      contentPanel.add(finesPanel, "Fines");
+
+       
+
+      add(contentPanel, BorderLayout.CENTER);
+       
 
 
       }

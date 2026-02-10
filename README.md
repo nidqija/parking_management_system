@@ -47,8 +47,8 @@ A standalone GUI application designed for university parking lot management. Thi
 - [ ] **Fine Configuration** 
     - Option to select the active fine scheme:
         - **Option A:** Fixed Fine (RM 50). ✅ 
-        - **Option B:** Progressive (RM 50 -> RM 100 -> RM 150 -> RM 200). 
-        - **Option C:** Hourly (RM 20/hr overstay). 
+        - **Option B:** Progressive (RM 50 -> RM 100 -> RM 150 -> RM 200). ✅ 
+        - **Option C:** Hourly (RM 20/hr overstay). ✅ 
     - *Note: Applied to new entries only.* 
 
 - [ ] **Fine Management** 

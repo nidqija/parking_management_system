@@ -25,12 +25,12 @@ A standalone GUI application designed for university parking lot management. Thi
     - Output: Display ticket `T-PLATE-TIMESTAMP`.
 
 - [ ] **Vehicle Exit Module**
-    - Input: License Plate search.
+    - Input: License Plate search. ✅ 
     - Logic: 
-        - Find entry time and calculate total duration.
-        - Calculate fee based on spot hourly rate.
-        - Retrieve any existing unpaid fines linked to the plate.
-    - Action: Mark spot as `Available` upon payment.
+        - Find entry time and calculate total duration. ✅ 
+        - Calculate fee based on spot hourly rate. ✅ 
+        - Retrieve any existing unpaid fines linked to the plate. 
+    - Action: Mark spot as `Available` upon payment. ✅ 
 
 - [ ] **Payment Processing**
     - Support: Cash and Card payments.

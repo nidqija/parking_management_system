@@ -1,10 +1,8 @@
 package Model;
 
 
+import Controller.ParkingFine;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 
 public class CalculatorFee {
@@ -14,58 +12,80 @@ public class CalculatorFee {
     public static final int OPTION_PROGRESSIVE = 2;
     public static final int OPTION_HOURLY = 3;
     int option = OPTION_PROGRESSIVE;
+    private double baseFee;
+    private double fineAmount;
+    private long lastHours;
+    private long startTime;
+
+
 
 
     public static double calculateBaseFee(double hourlyRate , long hours){
         return hourlyRate * hours;
     }
 
+    public double getBaseFee() {
+        return baseFee;
+    }
+
+    public double getFineAmount() {
+        return fineAmount;
+    }
+
+    public long getLastHours() {
+        return lastHours;
+    }
+
+    public double getTotalAmount(){
+        return baseFee + fineAmount;
+    }
+
+    public long getStartTime(){
+        return startTime;
+    }
+
+    
+
 
     
 
    public static double calculateFine(int fineOption, double baseFee, int hourParked) {
-    if (hourParked <= 24) return 0.0; 
+  
+
+    if (hourParked <= 24) return 0.0;
 
     double fineAmount = 0.0;
-    String violationType = "";
+    ParkingFine fineController = ParkingFine.getInstance();
 
-   
+    double dbAmount = 0.0;
     switch (fineOption) {
-        case OPTION_FIXED: violationType = "FIXED"; break;
-        case OPTION_PROGRESSIVE: violationType = "PROGRESSIVE"; break;
-        case OPTION_HOURLY: violationType = "HOURLY"; break;
-    }
+        case OPTION_FIXED:
+            dbAmount = fineController.getFineAmount("FIXED");
+            fineAmount = dbAmount;
+            break;
+        case OPTION_PROGRESSIVE:
+            dbAmount = fineController.getFineAmount("PROGRESSIVE");
+            int totalDays = (hourParked + 23) / 24;
 
-    // 2. Fetch the 'amount' from SQLite
-    try (Connection conn = new Data.Sqlite().connect();
-         PreparedStatement pstmt = conn.prepareStatement("SELECT amount FROM fine_settings WHERE violation_type = ?")) {
-        
-        pstmt.setString(1, violationType);
-        ResultSet rs = pstmt.executeQuery();
-
-        if (rs.next()) {
-            double dbAmount = rs.getDouble("amount");
-
-            // 3. Apply the specific logic based on the option
-            if (fineOption == OPTION_FIXED) {
-                fineAmount = dbAmount; 
-            } 
-            else if (fineOption == OPTION_PROGRESSIVE) {
-                int totalDays = (hourParked + 23) / 24; 
-                // Uses DB amount (50) as the base, then adds increments (e.g., +100 per day)
-                if (totalDays == 2) fineAmount = dbAmount + 100.0;
-                else if (totalDays == 3) fineAmount = dbAmount + 100.0 + 150.0;
-                else if (totalDays >= 4) fineAmount = dbAmount + 100.0 + 150.0 + 200.0;
-                else fineAmount = dbAmount;
-            } 
-            else if (fineOption == OPTION_HOURLY) {
-                // Uses DB amount (20) as the hourly multiplier
-                fineAmount = (hourParked - 24) * dbAmount;
+            if (totalDays <= 1) {
+            fineAmount = dbAmount; // RM 50 for first day
+          } else if (totalDays == 2) {
+               fineAmount = dbAmount + 100.0; // Total: 150
+            } else if (totalDays == 3) {
+                fineAmount = dbAmount + 100.0 + 150.0; // Total: 300
+            } else if (totalDays >= 4) {
+                fineAmount = dbAmount + 100.0 + 150.0 + 200.0 ; 
             }
-        }
-    } catch (SQLException e) {
-        e.printStackTrace();
+            break;
+        case OPTION_HOURLY:
+            dbAmount = fineController.getFineAmount("HOURLY");
+            int hoursOverstay = hourParked - 24;
+            fineAmount = dbAmount * hoursOverstay;
+            break;
+        default:
+            fineAmount = 0.0; 
     }
+
 
     return fineAmount;
 }
@@ -83,20 +103,21 @@ public class CalculatorFee {
             var rs = pstmt.executeQuery();
             
             if (rs.next()){
-               String entryTimeStr = rs.getString("entry_time");
-               double hourlyRate = rs.getDouble("hourly_rate");
-               long hours = calculateHour(entryTimeStr);
-               
-               String schemeStr = Controller.ParkingFine.getInstance().getActiveFineScheme();
-               int option = mapSchemeToOption(schemeStr);
+              String entryTimeStr = rs.getString("entry_time");
+                double hourlyRate = rs.getDouble("hourly_rate");
+                String schemeStr = ParkingFine.getInstance().getActiveFineScheme();
+                int fineOption = mapSchemeToOption(schemeStr);
 
-               if (option == -1) {
-                return "Error: Invalid or no Parking Fine Scheme selected in settings.";
-            }
-               double baseFee = calculateBaseFee(hourlyRate, hours);
-               double fineAmount = calculateFine(option, baseFee, (int)hours);
-               return String.format("Base Fee: RM %.2f, Fine: RM %.2f (Total: RM %.2f)", 
-                                baseFee, fineAmount, (baseFee + fineAmount));
+                if (fineOption == -1) {
+                    return "Error: Unknown fine scheme.";
+                }
+
+
+                this.lastHours = calculateHour(entryTimeStr);
+                this.baseFee = calculateBaseFee(hourlyRate, this.lastHours);
+                this.fineAmount = calculateFine(fineOption, this.baseFee, (int)this.lastHours);
+                return String.format("Base Fee: RM %.2f, Fine: RM %.2f for %d hours parked.", 
+                                     this.baseFee, this.fineAmount, this.lastHours);
             }
               
             } 
@@ -138,14 +159,18 @@ public class CalculatorFee {
 }
 
 
-public boolean processFinalPayment(String plate, double amountPaid) {
+public boolean processFinalPayment(String plate, double amountPaid, long hours) {
     try (Connection conn = new Data.Sqlite().connect()) {
 
-        String sql = "UPDATE Tickets SET payment_status = 'PAID', exit_time = datetime('now') " +
-                     "WHERE license_plate = ? AND payment_status = 'UNPAID'";
+       String sql = "UPDATE Tickets SET payment_status = 'PAID', exit_time = datetime('now'), " +
+                 "parking_fee = ?, duration_hours = ? " +
+                 "WHERE license_plate = ? AND payment_status = 'UNPAID'";
+
 
         var pstmt = conn.prepareStatement(sql);
-        pstmt.setString(1, plate);
+        pstmt.setDouble(1, amountPaid); // matches first ?
+        pstmt.setLong(2, hours);       // matches second ?
+        pstmt.setString(3, plate);
         int rowsUpdated = pstmt.executeUpdate();
         
         if (rowsUpdated > 0){
@@ -167,7 +192,7 @@ public boolean processFinalPayment(String plate, double amountPaid) {
 }
 
 
-public String getFinalReceipt(String plate , String paymentMethod){
+public String getFinalReceipt(String plate , String paymentMethod , double totalPaid , double fineAmount , double baseFee , long hours , long startTime){ {
      
   return "==========================================\n" +
            "           PARKING OFFICIAL RECEIPT       \n" +
@@ -176,14 +201,14 @@ public String getFinalReceipt(String plate , String paymentMethod){
            "Status        : PAID\n" +
            "Method        : " + paymentMethod + "\n" +
            "------------------------------------------\n" +
-           "Entry Time    : [From Database]\n" +
+           "Entry Time    : " + java.time.LocalDateTime.ofEpochSecond(startTime, 0, java.time.ZoneOffset.UTC) + "\n" +
            "Exit Time     : " + java.time.LocalDateTime.now() + "\n" +
-           "Duration      : [Hours] Hours\n" +
+           "Duration      : " + hours + " Hours\n" +
            "------------------------------------------\n" +
-           "Base Fee      : [Hours] x RM [Rate]\n" +
-           "Fines Due     : RM [Fine Amount]\n" +
+           "Base Fee      : RM " + baseFee + "\n" +
+           "Fines Due     : RM " + fineAmount + "\n" +
            "------------------------------------------\n" +
-           "TOTAL PAID    : RM [Total]\n" +
+           "TOTAL PAID    : RM " + totalPaid + "\n" +
            "Balance       : RM 0.00\n" +
            "==========================================\n" +
            "      THANK YOU! HAVE A SAFE TRIP         \n";
@@ -197,4 +222,5 @@ public String getFinalReceipt(String plate , String paymentMethod){
 
 
 
+}
 }

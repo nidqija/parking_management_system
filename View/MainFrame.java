@@ -94,6 +94,12 @@ public class MainFrame extends JFrame implements Navigator {
         }
 
 
+        if(pageName.equals("ExitPanel")){
+            ExitPanel exitPanel = new ExitPanel(this);
+            mainPanel.add(exitPanel, "ExitPanel");
+        }
+
+
 
     cardLayout.show(mainPanel, pageName);
 

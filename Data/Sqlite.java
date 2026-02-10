@@ -131,6 +131,15 @@ public class Sqlite {
                     stmt.execute(tb_reservations);
 
 
+                    String tb_activeschemesettings = "CREATE TABLE IF NOT EXISTS Active_Scheme_Settings (" +
+                            "id INTEGER PRIMARY KEY CHECK (id = 1), " + 
+                            "active_scheme TEXT NOT NULL, " +
+                            "settings_value TEXT NOT NULL" +
+                            ");";
+
+                    stmt.execute(tb_activeschemesettings);
+
+
                     String admin_table = "CREATE TABLE IF NOT EXISTS Admins (" +
                             "admin_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                             "username TEXT NOT NULL UNIQUE, " +
@@ -141,6 +150,9 @@ public class Sqlite {
                     System.out.println("All tables created successfully.");
 
                     System.out.println("Inserting sample data...");
+
+
+                    stmt.execute("INSERT OR IGNORE INTO Active_Scheme_Settings (id, active_scheme, settings_value) VALUES (1, 'Option A', 'Fixed Fine');");
 
                     // A. Insert Floors
                     // ------------------------------------------------------------
@@ -154,6 +166,7 @@ public class Sqlite {
                     stmt.execute("INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('CAR-1234', 'CAR');");
                     stmt.execute("INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('BIKE-8888', 'MOTORCYCLE');");
                     stmt.execute("INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('BAD-5555', 'CAR');"); // Has unpaid fine
+                    stmt.execute("INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('TEST-FINE', 'CAR');"); // For fine testing
 
                     // C. Insert 45 Parking Spots (Loop Logic)
                     // ------------------------------------------------------------
@@ -219,6 +232,11 @@ public class Sqlite {
                     stmt.execute("INSERT OR IGNORE INTO Tickets (ticket_number, license_plate, spot_id, entry_time, payment_status) " +
                                  "VALUES ('T-BIKE8888-001', 'BIKE-8888', 'F2-R1-S1', datetime('now', '-30 minutes'), 'UNPAID');");
 
+                    // Tickets to test fine 
+
+                    stmt.execute("INSERT OR IGNORE INTO Tickets (ticket_number, license_plate, spot_id, entry_time, payment_status) " +
+                    "VALUES ('T-FINE-001', 'TEST-FINE', 'F1-R1-S2', datetime('now', '-99 hours'), 'UNPAID');");
+
                     // E. Insert Historical Data (Fines)
                     // ------------------------------------------------------------
                     // BAD-5555 Left without paying a previous fine
@@ -229,7 +247,9 @@ public class Sqlite {
                                  "VALUES ('raziq', 'raziq123');");
                     
 
-                    stmt.execute("INSERT INTO fine_settings (violation_type, amount) " +
+                 
+
+                    stmt.execute("INSERT OR IGNORE INTO fine_settings (violation_type, amount) " +
                                  "VALUES ('OVERSTAY', 50.00), ('ILLEGAL_PARKING', 75.00), ('NO_PAYMENT', 100.00);");
 
                     

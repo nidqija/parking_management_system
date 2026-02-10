@@ -5,7 +5,7 @@ A standalone GUI application designed for university parking lot management. Thi
 ## 🏢 System Specifications
 - **Capacity:** 5 Floors.
 - **Spot Types:** Compact (RM 2/hr), Regular (RM 5/hr), Handicapped (RM 2/hr), Reserved (RM 10/hr).
-- **Rounding:** Ceiling rounding (e.g., 1.1 hours = 2 hours).
+- **Rounding:** Ceiling rounding (e.g., 1.1 hours = 2 hours). 
 
 ---
 
@@ -40,15 +40,15 @@ A standalone GUI application designed for university parking lot management. Thi
 *Handles system configuration and facility oversight.*
 
 - [ ] **Live Monitoring**
-    - Visual floor map showing all 5 levels. 
-    - Real-time occupancy rate (%) and total revenue counter.
-    - View list of all currently parked vehicles.
+    - Visual floor map showing all 5 levels.  ✅ 
+    - Real-time occupancy rate (%) and total revenue counter. ✅ 
+    - View list of all currently parked vehicles. ✅ 
 
 - [ ] **Fine Configuration** 
     - Option to select the active fine scheme:
-        - **Option A:** Fixed Fine (RM 50). 
-        - **Option B:** Progressive (RM 50 -> RM 100 -> RM 150 -> RM 200).
-        - **Option C:** Hourly (RM 20/hr overstay).
+        - **Option A:** Fixed Fine (RM 50). ✅ 
+        - **Option B:** Progressive (RM 50 -> RM 100 -> RM 150 -> RM 200). 
+        - **Option C:** Hourly (RM 20/hr overstay). 
     - *Note: Applied to new entries only.* 
 
 - [ ] **Fine Management** 

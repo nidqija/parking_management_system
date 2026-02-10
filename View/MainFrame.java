@@ -77,6 +77,11 @@ public class MainFrame extends JFrame implements Navigator {
             //mainPanel.add(exitPanel, "ExitPanel");
         }
 
+        if (pageName.equals("ViewIssuedTickets")) {
+            ViewTicketsIssued viewTicketsIssued = new ViewTicketsIssued(this);
+            mainPanel.add(viewTicketsIssued, "ViewIssuedTickets");
+        }
+
 
         if(pageName.equals("ManageFines")) {
             ManageFines manageFines = new ManageFines(this);

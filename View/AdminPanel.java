@@ -94,6 +94,21 @@ public class AdminPanel extends JPanel {
        verticalMenu.add(Box.createRigidArea(new Dimension(250, 20)));
 
 
+       JButton viewTickets = new JButton("View Issued Tickets");
+       styleButton(viewTickets, btnSize);
+         verticalMenu.add(viewTickets);
+         verticalMenu.add(Box.createRigidArea(new Dimension(250, 20)));
+        
+         viewTickets.addActionListener(e -> {
+                mainFrame.showPage("ViewIssuedTickets");
+            });
+
+
+        
+
+         
+
+
 
 
        JButton viewOutstandingFines = new JButton("View Outstanding Fines");

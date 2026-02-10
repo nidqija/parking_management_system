@@ -3,9 +3,12 @@ package Model;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 
 //When this constructor is called, it performs the insertion to the database with 
@@ -31,6 +34,13 @@ public class Ticket {
 
         saveToDB();
     }
+
+    public Ticket(String ticketID, Vehicle vehicle, String spotID, LocalDateTime entryTime) {
+    this.ticketID = ticketID;
+    this.vehicle = vehicle;
+    this.spotID = spotID;
+    this.entryTime = entryTime;
+}
 
     private String generateTicketID() {
         // Requirement: T-PLATE-TIMESTAMP
@@ -83,4 +93,40 @@ public class Ticket {
             System.err.println("Error saving ticket: " + e.getMessage());
         }
     }
+
+
+    public static List<Ticket> getAllTickets() {
+        List<Ticket> tickets = new ArrayList<>();
+        String query = "SELECT ticket_number, license_plate, spot_id, entry_time FROM Tickets";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(query);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                String ticketID = rs.getString("ticket_number");
+                String plateNumber = rs.getString("license_plate");
+                String spotID = rs.getString("spot_id");
+                LocalDateTime entryTime = LocalDateTime.parse(rs.getString("entry_time"), DB_FORMATTER);
+
+                Vehicle vehicle = new Vehicle(plateNumber, Vehicle.VehicleType.CAR, true); // Assuming CAR type for simplicity
+                Ticket ticket = new Ticket(ticketID, vehicle, spotID, entryTime);
+                ticket.ticketID = ticketID;
+                ticket.entryTime = entryTime;
+
+                tickets.add(ticket);
+            }
+            
+        } catch (Exception e) {
+        }
+        return tickets;
+    }
+
+
+    
+
+
+   
+
+   
 }

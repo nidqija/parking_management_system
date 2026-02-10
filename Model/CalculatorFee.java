@@ -64,7 +64,7 @@ public class CalculatorFee {
                double hourlyRate = rs.getDouble("hourly_rate");
                long hours = calculateHour(entryTimeStr);
                
-               String schemeStr = Controller.ParkingFine.getInstance().getActiveScheme();
+               String schemeStr = Controller.ParkingFine.getInstance().getActiveFineScheme();
                int option = mapSchemeToOption(schemeStr);
 
                if (option == -1) {

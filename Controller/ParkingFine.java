@@ -47,7 +47,7 @@ public class ParkingFine {
             pstmt.executeUpdate();
             System.out.println("Active fine scheme set to: " + scheme);
 
-            
+
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -98,6 +98,41 @@ public class ParkingFine {
 
      public double getFineAmount(String violationType) {
         return fineRates.getOrDefault(violationType, 0.0);
+    }
+
+
+    public String getActiveFineScheme(){
+        System.out.println("Current Active Fine Scheme: " + this.activeScheme);
+        String sql = "SELECT active_scheme FROM Active_Scheme_Settings WHERE id = 1";
+        try (Connection conn = new Sqlite().connect()){
+            var stmt = conn.createStatement();
+            var rs = stmt.executeQuery(sql);
+
+            if (rs.next()) {
+                this.activeScheme = rs.getString("active_scheme");
+                System.out.println("Active fine scheme from DB: " + this.activeScheme);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return this.activeScheme; 
+    }   
+
+
+    public void saveActiveScheme(String scheme){
+        this.activeScheme = scheme;
+        String sql = "UPDATE Active_Scheme_Settings SET active_scheme = ? WHERE id = 1";
+
+        try (Connection conn = new Sqlite().connect()){
+            var pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, scheme);
+            pstmt.executeUpdate();
+            System.out.println("Saved active fine scheme to DB: " + scheme);
+
+        } catch (Exception e) {
+            e.printStackTrace();    
+        }
     }
 
 

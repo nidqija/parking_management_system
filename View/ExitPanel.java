@@ -79,6 +79,9 @@ public class ExitPanel extends JPanel {
         add(btnPanel);
 
 
+        btnProcessPayment.addActionListener(e -> handlePayment());
+
+
 
 
       
@@ -100,6 +103,30 @@ public class ExitPanel extends JPanel {
             receiptArea.append("\n\n" + result);
 
 
+
+            
+        }
+
+
+        private void handlePayment(){
+            String plate = plateSearchField.getText().trim();
+            String paymentMethod = (String) paymentMethodComboBox.getSelectedItem();
+
+            if(plate.isEmpty()){
+                receiptArea.setText("Please enter a license plate number.");
+                return;
+            }
+
+
+            CalculatorFee calculatorFee = new CalculatorFee();
+
+            boolean paymentSuccess = calculatorFee.processFinalPayment(plate, 0.0); // Amount paid is not tracked here
+            if (paymentSuccess) {
+                String receipt = calculatorFee.getFinalReceipt(plate, paymentMethod);
+                receiptArea.setText(receipt);
+            } else {
+                receiptArea.setText("Payment processing failed. Please try again.");
+            }
 
             
         }

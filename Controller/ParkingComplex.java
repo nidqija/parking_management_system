@@ -1,10 +1,9 @@
 package Controller;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-
 import Data.Sqlite;
 import Model.ParkingSpot;
+import java.sql.Connection;
+import java.sql.ResultSet;
 
 public class ParkingComplex {
 
@@ -71,5 +70,10 @@ public class ParkingComplex {
        System.out.println(value);
         return value;
     }
+
+    public double getFormattedRevenue() {
+    Model.CalculatorFee calculator = new Model.CalculatorFee();
+    return calculator.getRevenue("2000-01-01", "2099-12-31");
+}
 
 };

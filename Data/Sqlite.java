@@ -216,7 +216,7 @@ stmt.execute("INSERT OR IGNORE INTO Parking_Spots (spot_id, floor_id, spot_type,
                     stmt.execute("DELETE FROM Tickets;");
                     stmt.execute("DELETE FROM Parking_Spots;"); 
                     
-                    for (int floor = 1; floor <= 3; floor++) {
+                    for (int floor = 1; floor <= 5; floor++) {
                         for (int s = 1; s <= 15; s++) {
                             // Generate ID: F1-R1-S1 (assuming 1 Row for simplicity, or we can map S1-S15)
                             String spotID = String.format("F%d-R1-S%d", floor, s);

@@ -81,6 +81,8 @@ public class ExitPanel extends JPanel {
         add(btnPanel);
 
 
+
+
         btnProcessPayment.addActionListener(e -> handlePayment());
 
 
@@ -131,8 +133,9 @@ public class ExitPanel extends JPanel {
             String paymentMethod = (String) paymentMethodComboBox.getSelectedItem();
             double unpaidHistorical = currentCalculator.getPreviousFines(plate);
             double grandTotal = currentCalculator.getTotalAmount() + unpaidHistorical;
+            String custPaymentMethod = (String) paymentMethodComboBox.getSelectedItem();
 
-            boolean paymentSuccess = currentCalculator.processFinalPayment(plate, grandTotal, currentCalculator.getLastHours());
+            boolean paymentSuccess = currentCalculator.processFinalPayment(plate, grandTotal, currentCalculator.getLastHours() , custPaymentMethod);
 
             if (paymentSuccess) {
                 String receipt = currentCalculator.getFinalReceipt(plate, paymentMethod, 

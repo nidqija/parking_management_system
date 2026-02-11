@@ -7,7 +7,7 @@ import javax.swing.*;
 public class ManageFloorPanel extends JPanel {
 
     private int floorId;
-    private int totalFloor = 3;
+    private int totalFloor = 5;
 
     public ManageFloorPanel(MainFrame mainFrame, int floorId) {
 

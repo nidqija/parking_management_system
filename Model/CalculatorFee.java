@@ -3,6 +3,10 @@ package Model;
 
 import Controller.ParkingFine;
 import java.sql.Connection;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
 
 public class CalculatorFee {
@@ -16,6 +20,7 @@ public class CalculatorFee {
     private double fineAmount;
     private long lastHours;
     private long startTime;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
 
 
@@ -90,50 +95,76 @@ public class CalculatorFee {
     return fineAmount;
 }
 
-    public String processExit(String plate) {
+public String processExit(String plate) {
+    try (Connection conn = new Data.Sqlite().connect()) {
+        String sql = "SELECT t.entry_time, s.hourly_rate FROM Tickets t " +
+                     "JOIN Parking_Spots s ON t.spot_id = s.spot_id " +
+                     "WHERE t.license_plate = ? AND t.exit_time IS NULL";
+
+        var pstmt = conn.prepareStatement(sql);
+        pstmt.setString(1, plate);
+        var rs = pstmt.executeQuery();
+
+        if (rs.next()) {
+            String entryTimeStr = rs.getString("entry_time");
+            double hourlyRate = rs.getDouble("hourly_rate");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            
+            // USE SYSTEM LOCAL TIME
+            java.time.LocalDateTime currentTime = java.time.LocalDateTime.now();
+
+            this.lastHours = calculateHour(entryTimeStr);
+            this.baseFee = calculateBaseFee(hourlyRate, this.lastHours);
+            
+            String schemeStr = ParkingFine.getInstance().getActiveFineScheme();
+            int fineOption = mapSchemeToOption(schemeStr);
+            this.fineAmount = calculateFine(fineOption, this.baseFee, (int)this.lastHours);
+
+            // Convert to EpochSecond using the system default offset
+            this.startTime = java.time.LocalDateTime.parse(entryTimeStr, formatter)
+                                .atZone(java.time.ZoneId.systemDefault())
+                                .toEpochSecond();
+
+             return String.format("\n\n====================Payment Details====================\n Base Fee: RM %.2f,\n Fine: RM %.2f \n Start Time: %s\n End Time: %s\n Parked for: %d hours parked.\n======================================================\n", 
+                                     this.baseFee, this.fineAmount, entryTimeStr, currentTime.format(formatter), this.lastHours);
+
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        return "Error: " + e.getMessage();
+    }
+    return "No active ticket found for plate: " + plate;
+}
+
+ 
+    public double getPreviousFines(String plate){
+        double totalPreviousFines = 0.0;
         try (Connection conn = new Data.Sqlite().connect()) {
 
-             String sql = "SELECT t.entry_time, s.hourly_rate " +
-             "FROM Tickets t " +
-             "JOIN Parking_Spots s ON t.spot_id = s.spot_id " +
-             "WHERE t.license_plate = ? AND t.exit_time IS NULL";
+             String sql = "SELECT SUM(parking_fee) AS total_fines " +
+             "FROM Tickets " +
+             "WHERE license_plate = ? AND payment_status = 'PAID'";
 
             var pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, plate);
             var rs = pstmt.executeQuery();
             
             if (rs.next()){
-              String entryTimeStr = rs.getString("entry_time");
-                double hourlyRate = rs.getDouble("hourly_rate");
-                String schemeStr = ParkingFine.getInstance().getActiveFineScheme();
-                int fineOption = mapSchemeToOption(schemeStr);
-
-                if (fineOption == -1) {
-                    return "Error: Unknown fine scheme.";
-                }
-
-
-                this.lastHours = calculateHour(entryTimeStr);
-                this.baseFee = calculateBaseFee(hourlyRate, this.lastHours);
-                this.fineAmount = calculateFine(fineOption, this.baseFee, (int)this.lastHours);
-                return String.format("Base Fee: RM %.2f, Fine: RM %.2f for %d hours parked.", 
-                                     this.baseFee, this.fineAmount, this.lastHours);
+              totalPreviousFines = rs.getDouble("total_fines");
             }
               
             } 
         catch (Exception e) {
             e.printStackTrace();
-            return "Error processing exit for plate: " + plate;
-        }
-        return "No active ticket found for plate: " + plate;
-
-    };
+    }
+    return totalPreviousFines;
+}
 
 
     private long calculateHour(String entryTimeStr) {
-       java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-       java.time.LocalDateTime entryTime = java.time.LocalDateTime.parse(entryTimeStr, formatter);  
-        java.time.LocalDateTime currentTime = java.time.LocalDateTime.now(java.time.ZoneOffset.UTC);
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        java.time.LocalDateTime entryTime = java.time.LocalDateTime.parse(entryTimeStr, formatter);  
+        java.time.LocalDateTime currentTime = java.time.LocalDateTime.now();
         java.time.Duration duration = java.time.Duration.between(entryTime, currentTime);
         long minutes = duration.toMinutes();
         long hours = (long) Math.ceil(minutes / 60.0);
@@ -168,19 +199,30 @@ public boolean processFinalPayment(String plate, double amountPaid, long hours) 
 
 
         var pstmt = conn.prepareStatement(sql);
+
+
         pstmt.setDouble(1, amountPaid); // matches first ?
         pstmt.setLong(2, hours);       // matches second ?
         pstmt.setString(3, plate);
         int rowsUpdated = pstmt.executeUpdate();
         
         if (rowsUpdated > 0){
+
+            String updatedFineLedger = "UPDATE Fines_Ledger SET status = 'PAID' WHERE license_plate = ? AND status = 'UNPAID'";
+            var pstmt1 = conn.prepareStatement(updatedFineLedger);
+            pstmt1.setString(1, plate);
+            pstmt1.executeUpdate();
+
+
             String updateSpotSQL = "UPDATE Parking_Spots SET status = 'AVAILABLE', current_vehicle_plate = NULL " +
                                  "WHERE current_vehicle_plate = ?";
             
             var pstmt2 = conn.prepareStatement(updateSpotSQL);
             pstmt2.setString(1, plate);
             pstmt2.executeUpdate();
+
             return  true;
+
         }
           
         } 
@@ -193,6 +235,8 @@ public boolean processFinalPayment(String plate, double amountPaid, long hours) 
 
 
 public String getFinalReceipt(String plate , String paymentMethod , double totalPaid , double fineAmount , double baseFee , long hours , long startTime){ {
+    ZoneOffset currentOffset = ZoneId.systemDefault().getRules().getOffset(LocalDateTime.now());
+    LocalDateTime entryDateTime = LocalDateTime.ofEpochSecond(startTime, 0, currentOffset);
      
   return "==========================================\n" +
            "           PARKING OFFICIAL RECEIPT       \n" +
@@ -201,8 +245,8 @@ public String getFinalReceipt(String plate , String paymentMethod , double total
            "Status        : PAID\n" +
            "Method        : " + paymentMethod + "\n" +
            "------------------------------------------\n" +
-           "Entry Time    : " + java.time.LocalDateTime.ofEpochSecond(startTime, 0, java.time.ZoneOffset.UTC) + "\n" +
-           "Exit Time     : " + java.time.LocalDateTime.now() + "\n" +
+           "Entry Time    : " + entryDateTime.format(formatter) + "\n" +
+           "Exit Time     : " + LocalDateTime.now().format(formatter) + "\n" +
            "Duration      : " + hours + " Hours\n" +
            "------------------------------------------\n" +
            "Base Fee      : RM " + baseFee + "\n" +

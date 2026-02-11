@@ -123,9 +123,7 @@ cmbType.addActionListener(e -> {
         // 3. Generate Ticket
         Ticket ticket = new Ticket(vehicle, selectedSpot.getSpotID());
 
-        // REMOVED: WritetoCSV.saveTicket(ticket); 
-        // Reason: Ticket constructor now handles DB insertion automatically.
-
+        
         // 4. Display to User
         txtDisplay.setText("=== ENTRY CONFIRMED ===\n");
         txtDisplay.append(ticket.getTicketDetails());

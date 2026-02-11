@@ -147,6 +147,24 @@ public class Sqlite {
                             ");";
                     stmt.execute(admin_table);
 
+
+                    String receipt_table = "CREATE TABLE IF NOT EXISTS Receipts (" +
+                            "receipt_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                            "ticket_number TEXT NOT NULL, " +
+                            "license_plate TEXT NOT NULL, " +
+                            "spot_id TEXT NOT NULL, " +
+                            "entry_time TEXT NOT NULL, " +
+                            "exit_time TEXT NOT NULL, " +
+                            "duration_hours INTEGER NOT NULL, " +
+                            "parking_fee FLOAT NOT NULL, " +
+                            "payment_method TEXT NOT NULL, " +
+                            "FOREIGN KEY (ticket_number) REFERENCES Tickets(ticket_number), " +
+                            "FOREIGN KEY (license_plate) REFERENCES Vehicles(license_plate), " +
+                            "FOREIGN KEY (spot_id) REFERENCES Parking_Spots(spot_id)" +
+                            ");";
+
+                    stmt.execute(receipt_table);
+
                     System.out.println("All tables created successfully.");
 
                     System.out.println("Inserting sample data...");

@@ -5,7 +5,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import Data.Sqlite;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +26,10 @@ public class Fines {
             
     }
 
+    public Fines() {
+        // Default constructor
+    }
+
     public String getFineID() {return fine_type;}
     public String getVehiclePlate() {return license_plate;}
     public double getAmount() {return amount;}
@@ -42,18 +45,42 @@ public class Fines {
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
-                String license_plate = rs.getString("license_plate");
-                String fine_type = rs.getString("violation_type");
-                double amount = rs.getDouble("amount");
-                String status = rs.getString("status");
+                    String license_plate = rs.getString("license_plate");
+                    String fine_type = rs.getString("violation_type");
+                    double amount = rs.getDouble("amount");
+                    String status = rs.getString("status");
 
-                Fines fine = new Fines(license_plate, fine_type, amount, status);
-                finesList.add(fine);
+                    Fines fine = new Fines(license_plate, fine_type, amount, status);
+                    finesList.add(fine);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            return finesList;
         }
 
-        return finesList;
+
+        public List<Fines> getUnpaidFines() {
+            List<Fines> fines = new ArrayList<>();
+            String query = "SELECT license_plate, violation_type, amount, status FROM Fines_Ledger WHERE status = 'UNPAID'";
+
+            try (Connection conn = DriverManager.getConnection(DB_URL);
+                PreparedStatement pstmt = conn.prepareStatement(query);
+                ResultSet rs = pstmt.executeQuery()) {
+
+                while (rs.next()) {
+                    String license_plate = rs.getString("license_plate");
+                    String fine_type = rs.getString("violation_type");
+                    double amount = rs.getDouble("amount");
+                    String status = rs.getString("status");
+
+                    Fines fine = new Fines(license_plate, fine_type, amount, status);
+                    fines.add(fine);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return fines;
     }
 }

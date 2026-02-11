@@ -115,6 +115,11 @@ public class AdminPanel extends JPanel {
         verticalMenu.add(Box.createRigidArea(new Dimension(250, 20)));
 
 
+        viewOutstandingFines.addActionListener(e -> {
+            mainFrame.showPage("OutstandingFinesPanel");
+        });
+
+
         JButton manageRevenue = new JButton("Manage Revenue");
         styleButton(manageRevenue, btnSize);
         verticalMenu.add(manageRevenue);

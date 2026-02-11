@@ -84,6 +84,14 @@ public class ExitPanel extends JPanel {
         btnProcessPayment.addActionListener(e -> handlePayment());
 
 
+        JButton backButton = new JButton("Back to Main Menu");
+        backButton.addActionListener(e -> {
+            mainFrame.showPage("Homepage");
+        });
+
+        add(backButton);
+
+
 
 
       

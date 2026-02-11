@@ -17,6 +17,7 @@ public class EntryPanel extends JPanel {
     private JButton btnCheckSpots;
     private JButton btnEnter;
     private JTextArea txtDisplay;
+    private MainFrame mainFrame;
     
     private ParkingGroup parkingGroup; 
 
@@ -87,6 +88,13 @@ cmbType.addActionListener(e -> {
 
         // 2. Confirm Entry
         btnEnter.addActionListener(e -> processEntry());
+
+         JButton backButton = new JButton("Back to Main Menu");
+        backButton.addActionListener(e -> {
+            mainFrame.showPage("Homepage");
+        });
+
+        add(backButton, BorderLayout.SOUTH);
     }
 
     private void resetSelection() {
@@ -132,6 +140,8 @@ cmbType.addActionListener(e -> {
         txtPlate.setText("");
         resetSelection();
         JOptionPane.showMessageDialog(this, "Ticket Generated & Saved to Database!");
+
+       
     }
     
    

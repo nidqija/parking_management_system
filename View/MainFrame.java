@@ -67,6 +67,11 @@ public class MainFrame extends JFrame implements Navigator {
             return;
         }
 
+        if (pageName.equals("ManageRevenue")) {
+            ManageRevenue manageRevenue = new ManageRevenue(this);
+            mainPanel.add(manageRevenue, "ManageRevenue");
+        }
+
         if (pageName.equals("EntryPanel")) {
             EntryPanel entryPanel = new EntryPanel(this,pg);
             mainPanel.add(entryPanel, "EntryPanel");

@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 
 public class CalculatorFee {
@@ -161,6 +162,34 @@ public String processExit(String plate) {
 }
 
 
+public double getRevenue(String dateFrom , String dateTo){
+    double totalRevenue = 0.0;
+    try (Connection conn = new Data.Sqlite().connect()) {
+
+         String sql = "SELECT SUM(parking_fee) AS total_revenue " +
+         "FROM Tickets " +
+         "WHERE payment_status = 'PAID' AND exit_time BETWEEN ? AND ?";
+
+        var pstmt = conn.prepareStatement(sql);
+        pstmt.setString(1, dateFrom + " 00:00:00");
+        pstmt.setString(2, dateTo + " 23:59:59");
+        var rs = pstmt.executeQuery();
+        
+        if (rs.next()){
+          totalRevenue = rs.getDouble("total_revenue");
+        }
+          
+        } 
+    catch (Exception e) {
+        e.printStackTrace();
+}
+    return totalRevenue;
+}
+
+
+
+
+
     private long calculateHour(String entryTimeStr) {
         java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         java.time.LocalDateTime entryTime = java.time.LocalDateTime.parse(entryTimeStr, formatter);  
@@ -177,6 +206,42 @@ public String processExit(String plate) {
     }
 
 
+
+    public List<Object[]> getPaidTicket(){
+        List<Object[]> paidTickets = new java.util.ArrayList<>();
+        try (Connection conn = new Data.Sqlite().connect()) {
+
+             String sql = "SELECT license_plate, entry_time, exit_time, parking_fee, payment_method " +
+             "FROM Tickets " +
+             "WHERE payment_status = 'PAID'";
+
+            var pstmt = conn.prepareStatement(sql);
+            var rs = pstmt.executeQuery();
+            
+            while (rs.next()){
+              Object[] row = new Object[5];
+              row[0] = rs.getString("license_plate");
+              row[1] = rs.getString("entry_time");
+              row[2] = rs.getString("exit_time");
+              row[3] = rs.getDouble("parking_fee");
+              row[4] = rs.getString("payment_method");
+
+              for (int i = 0; i < row.length; i++) {
+                  if (row[i] == null) {
+                      row[i] = "N/A";
+                  }
+              }
+              paidTickets.add(row);
+            }
+              
+            } 
+        catch (Exception e) {
+            e.printStackTrace();
+    }
+    return paidTickets;
+}
+
+
   
 
 
@@ -190,11 +255,11 @@ public String processExit(String plate) {
 }
 
 
-public boolean processFinalPayment(String plate, double amountPaid, long hours) {
+public boolean processFinalPayment(String plate, double amountPaid, long hours , String paymentMethod){ {
     try (Connection conn = new Data.Sqlite().connect()) {
 
        String sql = "UPDATE Tickets SET payment_status = 'PAID', exit_time = datetime('now'), " +
-                 "parking_fee = ?, duration_hours = ? " +
+                 "parking_fee = ?, duration_hours = ? , payment_method = ? " +
                  "WHERE license_plate = ? AND payment_status = 'UNPAID'";
 
 
@@ -203,7 +268,8 @@ public boolean processFinalPayment(String plate, double amountPaid, long hours) 
 
         pstmt.setDouble(1, amountPaid); // matches first ?
         pstmt.setLong(2, hours);       // matches second ?
-        pstmt.setString(3, plate);
+        pstmt.setString(3, paymentMethod);
+        pstmt.setString(4, plate);
         int rowsUpdated = pstmt.executeUpdate();
         
         if (rowsUpdated > 0){
@@ -231,6 +297,7 @@ public boolean processFinalPayment(String plate, double amountPaid, long hours) 
 
     }
     return false;
+}
 }
 
 

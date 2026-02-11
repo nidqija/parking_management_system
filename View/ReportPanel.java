@@ -7,6 +7,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import Model.Vehicle;
+import Controller.Fines;
 import Controller.Floors;
 
 public class ReportPanel extends JPanel {
@@ -63,6 +64,23 @@ public class ReportPanel extends JPanel {
                     String.format("%.1f%%", f.floorOccupancyRate(f.getFloorNumber()))
 
     
+            });
+        }
+    }
+
+    private void loadFinesData() {
+        if (finesTableModel == null) return;
+        finesTableModel.setRowCount(0);
+
+        // Assuming a method exists to get fines data
+        List<Fines> fines = Fines.getFinesReportList();
+
+        for (Fines fine : fines) {
+            finesTableModel.addRow(new Object[]{
+                    fine.getFineID(),
+                    fine.getVehiclePlate(),
+                    fine.getAmount(),
+                    fine.getStatus()
             });
         }
     }
@@ -205,6 +223,31 @@ public class ReportPanel extends JPanel {
       contentPanel.add(revenuePanel, "Revenue");
       contentPanel.add(occupancyPanel, "Occupancy");
       contentPanel.add(finesPanel, "Fines");
+
+
+
+      String[] finesColumn = { "Fine Type", "License Plate", "Amount", "Status"};
+      finesTableModel = new DefaultTableModel(finesColumn, 0) {
+          @Override
+          public boolean isCellEditable(int row, int column) {
+              return false; // make table non-editable
+          }
+        };
+
+        // JTable
+        finesTable = new JTable(finesTableModel);
+        finesTable.setFillsViewportHeight(true);
+        finesTable.setRowHeight(25);
+        finesTable.setFont(new Font("Arial", Font.PLAIN, 14));
+        finesTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 16));
+        finesTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // center Floor column
+
+        // Scroll pane
+        JScrollPane finesScrollPane = new JScrollPane(finesTable);
+        finesPanel.add(finesScrollPane, BorderLayout.CENTER); // add scroll pane to panel
+
+        // Load data
+        loadFinesData(); // make sure this method fills finesTableModel
 
        
 

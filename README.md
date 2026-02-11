@@ -18,7 +18,7 @@ A standalone GUI application designed for university parking lot management. Thi
     - Input: License Plate and Vehicle Type selection.
     - Logic: Filter available spots based on vehicle compatibility:
         - *Motorcycle:* Compact only.
-        - *Car:* Compact or Regular.
+        - *Car:* Compact or Regular. 
         - *SUV/Truck:* Regular only.
         - *Handicapped:* Any spot (RM 2/hr applies if card is present).
     - Action: Mark spot as `Occupied` and record `Entry Time`.

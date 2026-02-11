@@ -147,6 +147,24 @@ public class Sqlite {
                             ");";
                     stmt.execute(admin_table);
 
+
+                    String receipt_table = "CREATE TABLE IF NOT EXISTS Receipts (" +
+                            "receipt_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                            "ticket_number TEXT NOT NULL, " +
+                            "license_plate TEXT NOT NULL, " +
+                            "spot_id TEXT NOT NULL, " +
+                            "entry_time TEXT NOT NULL, " +
+                            "exit_time TEXT NOT NULL, " +
+                            "duration_hours INTEGER NOT NULL, " +
+                            "parking_fee FLOAT NOT NULL, " +
+                            "payment_method TEXT NOT NULL, " +
+                            "FOREIGN KEY (ticket_number) REFERENCES Tickets(ticket_number), " +
+                            "FOREIGN KEY (license_plate) REFERENCES Vehicles(license_plate), " +
+                            "FOREIGN KEY (spot_id) REFERENCES Parking_Spots(spot_id)" +
+                            ");";
+
+                    stmt.execute(receipt_table);
+
                     System.out.println("All tables created successfully.");
 
                     System.out.println("Inserting sample data...");
@@ -159,6 +177,9 @@ public class Sqlite {
                     stmt.execute("INSERT OR IGNORE INTO Floors (floor_id, floor_name) VALUES (1, 'Ground Floor');");
                     stmt.execute("INSERT OR IGNORE INTO Floors (floor_id, floor_name) VALUES (2, 'Level 1');");
                     stmt.execute("INSERT OR IGNORE INTO Floors (floor_id, floor_name) VALUES (3, 'Level 2');");
+                    stmt.execute("INSERT OR IGNORE INTO Floors (floor_id, floor_name) VALUES (4, 'Level 3');");
+                    stmt.execute("INSERT OR IGNORE INTO Floors (floor_id, floor_name) VALUES (5, 'Level 4');");
+
 
                     // B. Insert Vehicles (Needed first for Foreign Keys)
                     // ------------------------------------------------------------
@@ -168,6 +189,27 @@ public class Sqlite {
                     stmt.execute("INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('BAD-5555', 'CAR');"); // Has unpaid fine
                     stmt.execute("INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('TEST-FINE', 'CAR');"); // For fine testing
 
+
+                    stmt.execute("INSERT OR IGNORE INTO Parking_Spots (spot_id, floor_id, spot_type, status, hourly_rate) VALUES " +
+                    "('F4-R1-S1', 4, 'COMPACT', 'AVAILABLE', 2.0), ('F4-R1-S2', 4, 'COMPACT', 'AVAILABLE', 2.0), " +
+    "('F4-R1-S3', 4, 'COMPACT', 'AVAILABLE', 2.0), ('F4-R1-S4', 4, 'COMPACT', 'AVAILABLE', 2.0), " +
+    "('F4-R1-S5', 4, 'COMPACT', 'AVAILABLE', 2.0), ('F4-R1-S6', 4, 'REGULAR', 'AVAILABLE', 2.0), " +
+    "('F4-R1-S7', 4, 'REGULAR', 'AVAILABLE', 2.0), ('F4-R1-S8', 4, 'REGULAR', 'AVAILABLE', 2.0), " +
+    "('F4-R1-S9', 4, 'REGULAR', 'AVAILABLE', 2.0), ('F4-R1-S10', 4, 'REGULAR', 'AVAILABLE', 2.0), " +
+    "('F4-R1-S11', 4, 'REGULAR', 'AVAILABLE', 2.0), ('F4-R1-S12', 4, 'REGULAR', 'AVAILABLE', 2.0), " +
+    "('F4-R1-S13', 4, 'REGULAR', 'AVAILABLE', 2.0), ('F4-R1-S14', 4, 'REGULAR', 'AVAILABLE', 2.0), " +
+    "('F4-R1-S15', 4, 'REGULAR', 'AVAILABLE', 2.0);");
+
+// --- Adding Floor 5 (Level 4) ---
+stmt.execute("INSERT OR IGNORE INTO Parking_Spots (spot_id, floor_id, spot_type, status, hourly_rate) VALUES " +
+    "('F5-R1-S1', 5, 'COMPACT', 'AVAILABLE', 2.0), ('F5-R1-S2', 5, 'COMPACT', 'AVAILABLE', 2.0), " +
+    "('F5-R1-S3', 5, 'COMPACT', 'AVAILABLE', 2.0), ('F5-R1-S4', 5, 'COMPACT', 'AVAILABLE', 2.0), " +
+    "('F5-R1-S5', 5, 'COMPACT', 'AVAILABLE', 2.0), ('F5-R1-S6', 5, 'REGULAR', 'AVAILABLE', 2.0), " +
+    "('F5-R1-S7', 5, 'REGULAR', 'AVAILABLE', 2.0), ('F5-R1-S8', 5, 'REGULAR', 'AVAILABLE', 2.0), " +
+    "('F5-R1-S9', 5, 'REGULAR', 'AVAILABLE', 2.0), ('F5-R1-S10', 5, 'REGULAR', 'AVAILABLE', 2.0), " +
+    "('F5-R1-S11', 5, 'REGULAR', 'AVAILABLE', 2.0), ('F5-R1-S12', 5, 'REGULAR', 'AVAILABLE', 2.0), " +
+    "('F5-R1-S13', 5, 'REGULAR', 'AVAILABLE', 2.0), ('F5-R1-S14', 5, 'REGULAR', 'AVAILABLE', 2.0), " +
+    "('F5-R1-S15', 5, 'REGULAR', 'AVAILABLE', 2.0);");
                     // C. Insert 45 Parking Spots (Loop Logic)
                     // ------------------------------------------------------------
                     // We delete existing spots to avoid duplicates during testing re-runs

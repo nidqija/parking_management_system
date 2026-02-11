@@ -154,4 +154,22 @@ public class ParkingFine {
         }
     }
 
+
+    public double getHistoricalFines(String plate) {
+    double historicalTotal = 0.0;
+    String sql = "SELECT SUM(amount) as total FROM Fines_Ledger WHERE license_plate = ? AND status = 'UNPAID'";
+    
+    try (Connection conn = new Data.Sqlite().connect()) {
+        var pstmt = conn.prepareStatement(sql);
+        pstmt.setString(1, plate);
+        var rs = pstmt.executeQuery();
+        if (rs.next()) {
+            historicalTotal = rs.getDouble("total");
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return historicalTotal;
+}
+
 }

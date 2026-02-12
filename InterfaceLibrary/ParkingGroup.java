@@ -76,7 +76,10 @@ public class ParkingGroup {
     }
 
     public List<ParkingSpotInterface> getAvailableSpots(VehicleType vehicleType, String plateNumber) {
-        // If plate has a reserved spot, return only that spot
+        // Load active time-based reservations from DB
+        java.util.Map<String, String> activeReservations = loadActiveReservations();
+
+        // Check 1: Permanent VIP reserved spots (from Parking_Spots.reserved_for_plate)
         if (plateNumber != null && !plateNumber.isEmpty()) {
             List<ParkingSpotInterface> reservedSpots = spots.stream()
                     .filter(spot -> spot.getType() == ParkingSpotInterface.SpotType.RESERVED
@@ -87,10 +90,60 @@ public class ParkingGroup {
                 return reservedSpots;
             }
         }
-        // Otherwise return normal available spots
+
+        // Check 2: Time-based reservations (from Reservations table)
+        if (plateNumber != null && !plateNumber.isEmpty()) {
+            // If this plate has an active reservation, return only that spot
+            for (java.util.Map.Entry<String, String> entry : activeReservations.entrySet()) {
+                if (plateNumber.equalsIgnoreCase(entry.getValue())) {
+                    String reservedSpotId = entry.getKey();
+                    List<ParkingSpotInterface> timeReserved = spots.stream()
+                            .filter(spot -> spot.getSpotID().equals(reservedSpotId)
+                                    && spot.isAvailableFor(vehicleType, plateNumber))
+                            .collect(Collectors.toList());
+                    if (!timeReserved.isEmpty()) {
+                        return timeReserved;
+                    }
+                }
+            }
+        }
+
+        // Check 3: General pool — exclude spots reserved by others (both permanent and
+        // time-based)
         return spots.stream()
                 .filter(spot -> spot.isAvailableFor(vehicleType, plateNumber))
+                .filter(spot -> {
+                    // Exclude spots with active time reservations for OTHER plates
+                    String reservedBy = activeReservations.get(spot.getSpotID());
+                    if (reservedBy == null)
+                        return true; // No reservation, available
+                    return reservedBy.equalsIgnoreCase(plateNumber); // Only show if it's YOUR reservation
+                })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Queries the Reservations table for currently active reservations.
+     * Returns a map of spot_id -> license_plate for spots reserved right now.
+     */
+    private java.util.Map<String, String> loadActiveReservations() {
+        java.util.Map<String, String> reservations = new java.util.HashMap<>();
+        String query = "SELECT spot_id, license_plate FROM Reservations " +
+                "WHERE status = 'ACTIVE' " +
+                "AND start_time <= datetime('now', 'localtime') " +
+                "AND end_time >= datetime('now', 'localtime')";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(query)) {
+
+            while (rs.next()) {
+                reservations.put(rs.getString("spot_id"), rs.getString("license_plate"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error loading reservations: " + e.getMessage());
+        }
+        return reservations;
     }
 
     public ParkingSpotInterface getSpotById(String id) {

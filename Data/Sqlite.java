@@ -244,6 +244,7 @@ public class Sqlite {
                     // C. Insert 45 Parking Spots (Loop Logic)
                     // ------------------------------------------------------------
                     // We delete existing spots to avoid duplicates during testing re-runs
+                    stmt.execute("DELETE FROM Reservations;");
                     stmt.execute("DELETE FROM Tickets;");
                     stmt.execute("DELETE FROM Parking_Spots;");
 

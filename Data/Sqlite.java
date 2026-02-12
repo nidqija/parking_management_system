@@ -1,15 +1,17 @@
 package Data;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+//RUN THS FILE TO INIT OR RESET DATABASE 
 public class Sqlite {
 
     private static String url = "jdbc:sqlite:Data/Parking_Management_System.db";
+    private static String[] reservedPlates = { "WXY5521", "JJU8822", "VKA4321", "BMA1188", "PKR7777" };
 
-
-    public Connection connect(){
+    public Connection connect() {
         Connection conn = null;
         try {
             conn = DriverManager.getConnection(url);
@@ -22,7 +24,8 @@ public class Sqlite {
 
     public static void main(String[] args) {
         // This will create 'Parking_Management_System.db' in your project folder
-        // Ensure the "Data" folder exists, or change path to "Parking_Management_System.db"
+        // Ensure the "Data" folder exists, or change path to
+        // "Parking_Management_System.db"
 
         // 1. Load the driver
         try {
@@ -36,12 +39,11 @@ public class Sqlite {
         try (Connection conn = DriverManager.getConnection(url)) {
             if (conn != null) {
                 System.out.println("Connection to SQLite has been established.");
-                
+
                 // Create a sample table
-                
-                
+
                 try (Statement stmt = conn.createStatement()) {
-                    
+
                     // Enable Foreign Keys (OFF by default in SQLite)
                     stmt.execute("PRAGMA foreign_keys = ON;");
 
@@ -130,15 +132,13 @@ public class Sqlite {
                             ");";
                     stmt.execute(tb_reservations);
 
-
                     String tb_activeschemesettings = "CREATE TABLE IF NOT EXISTS Active_Scheme_Settings (" +
-                            "id INTEGER PRIMARY KEY CHECK (id = 1), " + 
+                            "id INTEGER PRIMARY KEY CHECK (id = 1), " +
                             "active_scheme TEXT NOT NULL, " +
                             "settings_value TEXT NOT NULL" +
                             ");";
 
                     stmt.execute(tb_activeschemesettings);
-
 
                     String admin_table = "CREATE TABLE IF NOT EXISTS Admins (" +
                             "admin_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -146,7 +146,6 @@ public class Sqlite {
                             "password TEXT NOT NULL" +
                             ");";
                     stmt.execute(admin_table);
-
 
                     String receipt_table = "CREATE TABLE IF NOT EXISTS Receipts (" +
                             "receipt_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -169,8 +168,8 @@ public class Sqlite {
 
                     System.out.println("Inserting sample data...");
 
-
-                    stmt.execute("INSERT OR IGNORE INTO Active_Scheme_Settings (id, active_scheme, settings_value) VALUES (1, 'Option A', 'Fixed Fine');");
+                    stmt.execute(
+                            "INSERT OR IGNORE INTO Active_Scheme_Settings (id, active_scheme, settings_value) VALUES (1, 'Option A', 'Fixed Fine');");
 
                     // A. Insert Floors
                     // ------------------------------------------------------------
@@ -180,42 +179,74 @@ public class Sqlite {
                     stmt.execute("INSERT OR IGNORE INTO Floors (floor_id, floor_name) VALUES (4, 'Level 3');");
                     stmt.execute("INSERT OR IGNORE INTO Floors (floor_id, floor_name) VALUES (5, 'Level 4');");
 
-
                     // B. Insert Vehicles (Needed first for Foreign Keys)
                     // ------------------------------------------------------------
-                    stmt.execute("INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('VIP-9999', 'SUV');");
-                    stmt.execute("INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('CAR-1234', 'CAR');");
-                    stmt.execute("INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('BIKE-8888', 'MOTORCYCLE');");
-                    stmt.execute("INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('BAD-5555', 'CAR');"); // Has unpaid fine
-                    stmt.execute("INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('TEST-FINE', 'CAR');"); // For fine testing
+                    stmt.execute(
+                            "INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('VIP-9999', 'SUV');");
+                    stmt.execute(
+                            "INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('CAR-1234', 'CAR');");
+                    stmt.execute(
+                            "INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('BIKE-8888', 'MOTORCYCLE');");
+                    stmt.execute(
+                            "INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('BAD-5555', 'CAR');"); // Has
+                                                                                                                         // unpaid
+                                                                                                                         // fine
+                    stmt.execute(
+                            "INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('TEST-FINE', 'CAR');"); // For
+                                                                                                                          // fine
+                                                                                                                          // testing
 
+                    // Add random reserved vehicles for spots S4 on each floor
+                    for (String plate : reservedPlates) {
+                        stmt.execute(String.format(
+                                "INSERT OR IGNORE INTO Vehicles (license_plate, vehicle_type) VALUES ('%s', 'CAR');",
+                                plate));
+                    }
 
-                    stmt.execute("INSERT OR IGNORE INTO Parking_Spots (spot_id, floor_id, spot_type, status, hourly_rate) VALUES " +
-                    "('F4-R1-S1', 4, 'COMPACT', 'AVAILABLE', 2.0), ('F4-R1-S2', 4, 'COMPACT', 'AVAILABLE', 2.0), " +
-    "('F4-R1-S3', 4, 'COMPACT', 'AVAILABLE', 2.0), ('F4-R1-S4', 4, 'COMPACT', 'AVAILABLE', 2.0), " +
-    "('F4-R1-S5', 4, 'COMPACT', 'AVAILABLE', 2.0), ('F4-R1-S6', 4, 'REGULAR', 'AVAILABLE', 2.0), " +
-    "('F4-R1-S7', 4, 'REGULAR', 'AVAILABLE', 2.0), ('F4-R1-S8', 4, 'REGULAR', 'AVAILABLE', 2.0), " +
-    "('F4-R1-S9', 4, 'REGULAR', 'AVAILABLE', 2.0), ('F4-R1-S10', 4, 'REGULAR', 'AVAILABLE', 2.0), " +
-    "('F4-R1-S11', 4, 'REGULAR', 'AVAILABLE', 2.0), ('F4-R1-S12', 4, 'REGULAR', 'AVAILABLE', 2.0), " +
-    "('F4-R1-S13', 4, 'REGULAR', 'AVAILABLE', 2.0), ('F4-R1-S14', 4, 'REGULAR', 'AVAILABLE', 2.0), " +
-    "('F4-R1-S15', 4, 'REGULAR', 'AVAILABLE', 2.0);");
+                    stmt.execute(
+                            "INSERT OR IGNORE INTO Parking_Spots (spot_id, floor_id, spot_type, status, hourly_rate) VALUES "
+                                    +
+                                    "('F4-R1-S1', 4, 'COMPACT', 'AVAILABLE', 2.0), ('F4-R1-S2', 4, 'COMPACT', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F4-R1-S3', 4, 'COMPACT', 'AVAILABLE', 2.0), ('F4-R1-S4', 4, 'COMPACT', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F4-R1-S5', 4, 'COMPACT', 'AVAILABLE', 2.0), ('F4-R1-S6', 4, 'REGULAR', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F4-R1-S7', 4, 'REGULAR', 'AVAILABLE', 2.0), ('F4-R1-S8', 4, 'REGULAR', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F4-R1-S9', 4, 'REGULAR', 'AVAILABLE', 2.0), ('F4-R1-S10', 4, 'REGULAR', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F4-R1-S11', 4, 'REGULAR', 'AVAILABLE', 2.0), ('F4-R1-S12', 4, 'REGULAR', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F4-R1-S13', 4, 'REGULAR', 'AVAILABLE', 2.0), ('F4-R1-S14', 4, 'REGULAR', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F4-R1-S15', 4, 'REGULAR', 'AVAILABLE', 2.0);");
 
-// --- Adding Floor 5 (Level 4) ---
-stmt.execute("INSERT OR IGNORE INTO Parking_Spots (spot_id, floor_id, spot_type, status, hourly_rate) VALUES " +
-    "('F5-R1-S1', 5, 'COMPACT', 'AVAILABLE', 2.0), ('F5-R1-S2', 5, 'COMPACT', 'AVAILABLE', 2.0), " +
-    "('F5-R1-S3', 5, 'COMPACT', 'AVAILABLE', 2.0), ('F5-R1-S4', 5, 'COMPACT', 'AVAILABLE', 2.0), " +
-    "('F5-R1-S5', 5, 'COMPACT', 'AVAILABLE', 2.0), ('F5-R1-S6', 5, 'REGULAR', 'AVAILABLE', 2.0), " +
-    "('F5-R1-S7', 5, 'REGULAR', 'AVAILABLE', 2.0), ('F5-R1-S8', 5, 'REGULAR', 'AVAILABLE', 2.0), " +
-    "('F5-R1-S9', 5, 'REGULAR', 'AVAILABLE', 2.0), ('F5-R1-S10', 5, 'REGULAR', 'AVAILABLE', 2.0), " +
-    "('F5-R1-S11', 5, 'REGULAR', 'AVAILABLE', 2.0), ('F5-R1-S12', 5, 'REGULAR', 'AVAILABLE', 2.0), " +
-    "('F5-R1-S13', 5, 'REGULAR', 'AVAILABLE', 2.0), ('F5-R1-S14', 5, 'REGULAR', 'AVAILABLE', 2.0), " +
-    "('F5-R1-S15', 5, 'REGULAR', 'AVAILABLE', 2.0);");
+                    // --- Adding Floor 5 (Level 4) ---
+                    stmt.execute(
+                            "INSERT OR IGNORE INTO Parking_Spots (spot_id, floor_id, spot_type, status, hourly_rate) VALUES "
+                                    +
+                                    "('F5-R1-S1', 5, 'COMPACT', 'AVAILABLE', 2.0), ('F5-R1-S2', 5, 'COMPACT', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F5-R1-S3', 5, 'COMPACT', 'AVAILABLE', 2.0), ('F5-R1-S4', 5, 'COMPACT', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F5-R1-S5', 5, 'COMPACT', 'AVAILABLE', 2.0), ('F5-R1-S6', 5, 'REGULAR', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F5-R1-S7', 5, 'REGULAR', 'AVAILABLE', 2.0), ('F5-R1-S8', 5, 'REGULAR', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F5-R1-S9', 5, 'REGULAR', 'AVAILABLE', 2.0), ('F5-R1-S10', 5, 'REGULAR', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F5-R1-S11', 5, 'REGULAR', 'AVAILABLE', 2.0), ('F5-R1-S12', 5, 'REGULAR', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F5-R1-S13', 5, 'REGULAR', 'AVAILABLE', 2.0), ('F5-R1-S14', 5, 'REGULAR', 'AVAILABLE', 2.0), "
+                                    +
+                                    "('F5-R1-S15', 5, 'REGULAR', 'AVAILABLE', 2.0);");
                     // C. Insert 45 Parking Spots (Loop Logic)
                     // ------------------------------------------------------------
                     // We delete existing spots to avoid duplicates during testing re-runs
                     stmt.execute("DELETE FROM Tickets;");
-                    stmt.execute("DELETE FROM Parking_Spots;"); 
-                    
+                    stmt.execute("DELETE FROM Parking_Spots;");
+
                     for (int floor = 1; floor <= 5; floor++) {
                         for (int s = 1; s <= 15; s++) {
                             // Generate ID: F1-R1-S1 (assuming 1 Row for simplicity, or we can map S1-S15)
@@ -226,20 +257,19 @@ stmt.execute("INSERT OR IGNORE INTO Parking_Spots (spot_id, floor_id, spot_type,
                             String status = "'AVAILABLE'";
                             String currentPlate = "NULL";
 
-                            // --- Logic to vary spot types ---
-                            if (floor == 1) {
-                                if (s <= 2) { 
-                                    type = "HANDICAPPED"; rate = 2.0; 
-                                } else if (s <= 5) { 
-                                    type = "RESERVED"; rate = 10.0; 
-                                    // Make Spot 3 permanently reserved for VIP-9999
-                                    if(s == 3) reservedPlate = "'VIP-9999'";
-                                } else if (s <= 10) {
-                                    type = "COMPACT"; rate = 2.0;
-                                }
-                            } else {
-                                // Floors 2 & 3: Mix of Compact and Regular
-                                if (s <= 5) { type = "COMPACT"; rate = 2.0; }
+                            // --- Logic to vary spot types (all floors) ---
+                            if (s <= 2) {
+                                type = "HANDICAPPED";
+                                rate = 2.0;
+                            } else if (s <= 4) {
+                                type = "RESERVED";
+                                rate = 10.0;
+                                // Make Spot 4 reserved for a random plate per floor (using the realistic list)
+                                if (s == 4)
+                                    reservedPlate = String.format("'%s'", reservedPlates[floor - 1]);
+                            } else if (s <= 10) {
+                                type = "COMPACT";
+                                rate = 2.0;
                             }
 
                             // --- Simulate Occupied Spots (for testing Exit) ---
@@ -256,10 +286,10 @@ stmt.execute("INSERT OR IGNORE INTO Parking_Spots (spot_id, floor_id, spot_type,
 
                             // Build INSERT String
                             String sql = String.format(
-                                "INSERT INTO Parking_Spots (spot_id, floor_id, spot_type, status, hourly_rate, reserved_for_plate, current_vehicle_plate) " +
-                                "VALUES ('%s', %d, '%s', %s, %.2f, %s, %s);",
-                                spotID, floor, type, status, rate, reservedPlate, currentPlate
-                            );
+                                    "INSERT INTO Parking_Spots (spot_id, floor_id, spot_type, status, hourly_rate, reserved_for_plate, current_vehicle_plate) "
+                                            +
+                                            "VALUES ('%s', %d, '%s', %s, %.2f, %s, %s);",
+                                    spotID, floor, type, status, rate, reservedPlate, currentPlate);
                             stmt.execute(sql);
                         }
                     }
@@ -267,37 +297,42 @@ stmt.execute("INSERT OR IGNORE INTO Parking_Spots (spot_id, floor_id, spot_type,
                     // D. Insert Active Tickets (For the occupied spots)
                     // ------------------------------------------------------------
                     // Ticket for CAR-1234 (Entered 2 hours ago)
-                    stmt.execute("INSERT OR IGNORE INTO Tickets (ticket_number, license_plate, spot_id, entry_time, payment_status) " +
-                                 "VALUES ('T-CAR1234-001', 'CAR-1234', 'F1-R1-S15', datetime('now', '-2 hours'), 'UNPAID');");
-                    
+                    stmt.execute(
+                            "INSERT OR IGNORE INTO Tickets (ticket_number, license_plate, spot_id, entry_time, payment_status) "
+                                    +
+                                    "VALUES ('T-CAR1234-001', 'CAR-1234', 'F1-R1-S15', datetime('now', '-2 hours'), 'UNPAID');");
+
                     // Ticket for BIKE-8888 (Entered 30 mins ago)
-                    stmt.execute("INSERT OR IGNORE INTO Tickets (ticket_number, license_plate, spot_id, entry_time, payment_status) " +
-                                 "VALUES ('T-BIKE8888-001', 'BIKE-8888', 'F2-R1-S1', datetime('now', '-30 minutes'), 'UNPAID');");
+                    stmt.execute(
+                            "INSERT OR IGNORE INTO Tickets (ticket_number, license_plate, spot_id, entry_time, payment_status) "
+                                    +
+                                    "VALUES ('T-BIKE8888-001', 'BIKE-8888', 'F2-R1-S1', datetime('now', '-30 minutes'), 'UNPAID');");
 
-                    // Tickets to test fine 
+                    // Tickets to test fine
 
-                    stmt.execute("INSERT OR IGNORE INTO Tickets (ticket_number, license_plate, spot_id, entry_time, payment_status) " +
-                    "VALUES ('T-FINE-001', 'TEST-FINE', 'F1-R1-S2', datetime('now', '-99 hours'), 'UNPAID');");
+                    stmt.execute(
+                            "INSERT OR IGNORE INTO Tickets (ticket_number, license_plate, spot_id, entry_time, payment_status) "
+                                    +
+                                    "VALUES ('T-FINE-001', 'TEST-FINE', 'F1-R1-S2', datetime('now', '-99 hours'), 'UNPAID');");
 
                     // E. Insert Historical Data (Fines)
                     // ------------------------------------------------------------
                     // BAD-5555 Left without paying a previous fine
-                    stmt.execute("INSERT OR IGNORE INTO Fines_Ledger (license_plate, violation_type, amount, status, created_at) " +
-                                 "VALUES ('BAD-5555', 'OVERSTAY', 50.00, 'UNPAID', datetime('now', '-5 days'));");
+                    stmt.execute(
+                            "INSERT OR IGNORE INTO Fines_Ledger (license_plate, violation_type, amount, status, created_at) "
+                                    +
+                                    "VALUES ('BAD-5555', 'OVERSTAY', 50.00, 'UNPAID', datetime('now', '-5 days'));");
 
                     stmt.execute("INSERT OR IGNORE INTO Admins (username, password) " +
-                                 "VALUES ('raziq', 'raziq123');");
-                    
+                            "VALUES ('raziq', 'raziq123');");
 
                     stmt.execute("DELETE FROM fine_settings");
 
                     stmt.execute("INSERT OR IGNORE INTO fine_settings (violation_type, amount) " +
-                                 "VALUES ('FIXED', 50.00), ('PROGRESSIVE', 50.00), ('HOURLY', 20.00);");
-
-                    
+                            "VALUES ('FIXED', 50.00), ('PROGRESSIVE', 50.00), ('HOURLY', 20.00);");
 
                     System.out.println("Sample data inserted successfully.");
-                
+
                 }
             }
         } catch (SQLException e) {

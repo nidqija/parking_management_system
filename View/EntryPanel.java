@@ -18,8 +18,8 @@ public class EntryPanel extends JPanel {
     private JButton btnEnter;
     private JTextArea txtDisplay;
     private MainFrame mainFrame;
-    
-    private ParkingGroup parkingGroup; 
+
+    private ParkingGroup parkingGroup;
 
     public EntryPanel(MainFrame mainFrame, ParkingGroup pg) {
         this.parkingGroup = pg;
@@ -28,7 +28,7 @@ public class EntryPanel extends JPanel {
 
         // --- Top: Input Form ---
         JPanel inputPanel = new JPanel(new GridLayout(4, 2, 5, 5));
-        
+
         inputPanel.add(new JLabel("License Plate:"));
         txtPlate = new JTextField();
         inputPanel.add(txtPlate);
@@ -39,13 +39,13 @@ public class EntryPanel extends JPanel {
 
         inputPanel.add(new JLabel("Available Spots:"));
         cmbAvailableSpots = new JComboBox<>();
-        cmbAvailableSpots.setEnabled(false); 
+        cmbAvailableSpots.setEnabled(false);
         inputPanel.add(cmbAvailableSpots);
 
         btnCheckSpots = new JButton("1. Find Spots");
         btnEnter = new JButton("2. Generate Ticket");
         btnEnter.setEnabled(false);
-        
+
         inputPanel.add(btnCheckSpots);
         inputPanel.add(btnEnter);
 
@@ -58,20 +58,21 @@ public class EntryPanel extends JPanel {
         add(new JScrollPane(txtDisplay), BorderLayout.CENTER);
 
         // --- Event Listeners ---
-cmbType.addActionListener(e -> {
+        cmbType.addActionListener(e -> {
             resetSelection(); // Refactored reset logic
         });
 
         // 1. Check for available spots
         btnCheckSpots.addActionListener(e -> {
             // Optional: Refresh DB data to ensure availability is current
-            parkingGroup.refresh(); 
+            parkingGroup.refresh();
 
             VehicleType selectedType = (VehicleType) cmbType.getSelectedItem();
-            List<ParkingSpotInterface> available = parkingGroup.getAvailableSpots(selectedType);
-            
+            String plate = txtPlate.getText().trim();
+            List<ParkingSpotInterface> available = parkingGroup.getAvailableSpots(selectedType, plate);
+
             cmbAvailableSpots.removeAllItems();
-            
+
             if (available.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "No spots available for " + selectedType);
                 btnEnter.setEnabled(false);
@@ -89,7 +90,7 @@ cmbType.addActionListener(e -> {
         // 2. Confirm Entry
         btnEnter.addActionListener(e -> processEntry());
 
-         JButton backButton = new JButton("Back to Main Menu");
+        JButton backButton = new JButton("Back to Main Menu");
         backButton.addActionListener(e -> {
             mainFrame.showPage("Homepage");
         });
@@ -98,9 +99,9 @@ cmbType.addActionListener(e -> {
     }
 
     private void resetSelection() {
-        cmbAvailableSpots.removeAllItems(); 
+        cmbAvailableSpots.removeAllItems();
         cmbAvailableSpots.setEnabled(false);
-        btnEnter.setEnabled(false);       
+        btnEnter.setEnabled(false);
         txtDisplay.setText("");
     }
 
@@ -112,17 +113,18 @@ cmbType.addActionListener(e -> {
         }
 
         VehicleType type = (VehicleType) cmbType.getSelectedItem();
-        
-        ParkingSpotInterface selectedSpot = (ParkingSpotInterface) cmbAvailableSpots.getSelectedItem();
-        if (selectedSpot == null) return;
 
-        // Double check availability 
-        if (!selectedSpot.isAvailableFor(type)) {
+        ParkingSpotInterface selectedSpot = (ParkingSpotInterface) cmbAvailableSpots.getSelectedItem();
+        if (selectedSpot == null)
+            return;
+
+        // Double check availability
+        if (!selectedSpot.isAvailableFor(type, plate)) {
             JOptionPane.showMessageDialog(this, "Error: Spot mismatch.");
             return;
         }
 
-        // 1. Create Vehicle 
+        // 1. Create Vehicle
         Vehicle vehicle = new Vehicle(plate, type);
 
         // 2. Mark Occupied (Memory Update)
@@ -131,18 +133,15 @@ cmbType.addActionListener(e -> {
         // 3. Generate Ticket
         Ticket ticket = new Ticket(vehicle, selectedSpot.getSpotID());
 
-        
         // 4. Display to User
         txtDisplay.setText("=== ENTRY CONFIRMED ===\n");
         txtDisplay.append(ticket.getTicketDetails());
-        
+
         // 5. Cleanup
         txtPlate.setText("");
         resetSelection();
         JOptionPane.showMessageDialog(this, "Ticket Generated & Saved to Database!");
 
-       
     }
-    
-   
+
 }

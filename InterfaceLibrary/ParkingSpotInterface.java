@@ -1,10 +1,11 @@
 package InterfaceLibrary;
+
 import Model.Vehicle.VehicleType;
 
 public class ParkingSpotInterface {
 
-
-    public ParkingSpotInterface(){};
+    public ParkingSpotInterface() {
+    };
 
     public enum SpotType {
         COMPACT,
@@ -21,8 +22,6 @@ public class ParkingSpotInterface {
     private String floorId;
     private String status;
     private float hourlyRate;
-    
-
 
     public ParkingSpotInterface(String spotID, SpotType type) {
         this.spotID = spotID;
@@ -30,33 +29,44 @@ public class ParkingSpotInterface {
         this.isOccupied = false;
     }
 
-
-    public String getReservedForPlate(){
+    public String getReservedForPlate() {
         return reservedForPlate;
     }
 
-    public String getCurrentVehiclePlate(){
+    public void setReservedForPlate(String plate) {
+        this.reservedForPlate = plate;
+    }
+
+    public String getCurrentVehiclePlate() {
         return currentVehiclePlate;
     }
 
-    public String getFloorId(){
+    public String getFloorId() {
         return floorId;
     }
 
-    public String getStatus(){
+    public String getStatus() {
         return status;
     }
 
-    public float getHourlyRate(){
+    public float getHourlyRate() {
         return hourlyRate;
     }
 
+    // Overload for backward compatibility (no plate = no reserved access)
     public boolean isAvailableFor(VehicleType vType) {
-        if (isOccupied) return false;
+        return isAvailableFor(vType, null);
+    }
 
-        // 1. Reserved spots are off-limits for general entry
+    public boolean isAvailableFor(VehicleType vType, String plateNumber) {
+        if (isOccupied)
+            return false;
+
+        // 1. Reserved spots: only the assigned plate holder can enter
         if (this.type == SpotType.RESERVED) {
-            return false; 
+            return plateNumber != null
+                    && reservedForPlate != null
+                    && plateNumber.equalsIgnoreCase(reservedForPlate);
         }
 
         // 2. Logic based on Vehicle Type
@@ -74,49 +84,53 @@ public class ParkingSpotInterface {
         }
     }
 
-    public void occupy() { this.isOccupied = true; }
-    
-    public String vacate() { 
-        this.isOccupied = false; 
-        return this.spotID; 
+    public void occupy() {
+        this.isOccupied = true;
     }
 
-    public String getSpotID() { return spotID; }
-    public SpotType getType() { return type; } // Added getter
+    public String vacate() {
+        this.isOccupied = false;
+        return this.spotID;
+    }
+
+    public String getSpotID() {
+        return spotID;
+    }
+
+    public SpotType getType() {
+        return type;
+    } // Added getter
 
     @Override
     public String toString() {
         return spotID + " (" + type + ")";
     }
 
-
-    public float CalculateRevenue(int hoursParked){
-        return hoursParked * this.hourlyRate; 
+    public float CalculateRevenue(int hoursParked) {
+        return hoursParked * this.hourlyRate;
     }
 
-
-    public void setDetails(String reservedForPlate, String currentVehiclePlate, String floorId, String status , String hourlyRate){
+    public void setDetails(String reservedForPlate, String currentVehiclePlate, String floorId, String status,
+            String hourlyRate) {
         this.reservedForPlate = reservedForPlate;
         this.currentVehiclePlate = currentVehiclePlate;
         this.floorId = floorId;
         this.status = status;
         this.hourlyRate = (hourlyRate != null && !hourlyRate.isEmpty()) ? Float.parseFloat(hourlyRate) : 0;
-        
+
     }
 
+    public String getDetails() {
 
-    public String getDetails(){
-
-        int testHours = 2; 
+        int testHours = 2;
         float totalRevenue = CalculateRevenue(testHours);
 
         String details = "Floor ID: " + floorId + "\n" +
-                         "Status: " + status + "\n" +
-                         "Reserved For Plate: " + (reservedForPlate != null ? reservedForPlate : "N/A") + "\n" +
-                         "Current Vehicle Plate: " + (currentVehiclePlate != null ? currentVehiclePlate : "N/A") + "\n" +
-                         "Hourly Rate: RM " + totalRevenue ;
+                "Status: " + status + "\n" +
+                "Reserved For Plate: " + (reservedForPlate != null ? reservedForPlate : "N/A") + "\n" +
+                "Current Vehicle Plate: " + (currentVehiclePlate != null ? currentVehiclePlate : "N/A") + "\n" +
+                "Hourly Rate: RM " + totalRevenue;
         return details;
     }
 
-    
 }

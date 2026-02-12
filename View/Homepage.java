@@ -12,8 +12,8 @@ public class Homepage extends JPanel {
 
     public Homepage(MainFrame mainFrame) {
 
-        //WELCOME LABEL
-      
+        // WELCOME LABEL
+
         setLayout(new CardLayout());
 
         JPanel card = new JPanel();
@@ -23,27 +23,24 @@ public class Homepage extends JPanel {
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
         label.setFont(new Font("Arial", Font.BOLD, 18));
 
-        //LOGIN BUTTON
+        // LOGIN BUTTON
 
-        JButton loginButton = new JButton("Login");
+        JButton loginButton = new JButton("Admin Login");
         loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         loginButton.setMaximumSize(new Dimension(200, 40));
         loginButton.addActionListener(e -> mainFrame.showPage("AdminSignInPage"));
 
-        //Entry button
+        // Entry button
         JButton signUpButton = new JButton("Enter Carpark");
         signUpButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         signUpButton.setMaximumSize(new Dimension(200, 40));
         signUpButton.addActionListener(e -> mainFrame.showPage("EntryPanel"));
 
-
-        //Exit button
+        // Exit button
         JButton exitButton = new JButton("Exit Carpark");
         exitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         exitButton.setMaximumSize(new Dimension(200, 40));
         exitButton.addActionListener(e -> mainFrame.showPage("ExitPanel"));
-
-
 
         card.add(Box.createVerticalGlue());
         card.add(label);

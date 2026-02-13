@@ -1,6 +1,7 @@
 package View;
 
 import Model.CalculatorFee;
+import Model.Receipts;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -168,9 +169,38 @@ public class ExitPanel extends JPanel {
                                                 currentCalculator.getLastHours() , 
                                                 currentCalculator.getStartTime());
                 receiptArea.setText("Payment successful!\n\n" + receipt);
+
+                  Receipts receiptModel = new Receipts();
+                receiptModel.insertReceipt(
+                currentCalculator.getTicketNumber(), // String
+                plate,                               // String
+                currentCalculator.getSpotId(),       // String
+                String.valueOf(currentCalculator.getStartTime()),    
+                String.valueOf(currentCalculator.getEndTime()),      
+                (int) currentCalculator.getLastHours(), 
+                 amountEntered,                         
+                 paymentMethod                        
+             );
+
+                String finalReceipt = currentCalculator.displayFinalReceipt(receipt);
+                receiptArea.setText(finalReceipt);
+                javax.swing.JDialog receiptDialog = new javax.swing.JDialog();
+                receiptDialog.setTitle("Transaction Receipt - " + plate);
+                receiptDialog.add(receiptArea);
+                receiptDialog.setSize(400, 550);
+                receiptDialog.setLocationRelativeTo(null); 
+                receiptDialog.setModal(true); 
+                receiptDialog.setVisible(true);
+
+              
+
+            
+
             } else {
                 receiptArea.setText("Payment failed. Please try again.");
             }
+
+
 
             
         }

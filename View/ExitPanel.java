@@ -168,9 +168,21 @@ public class ExitPanel extends JPanel {
                                                 currentCalculator.getLastHours() , 
                                                 currentCalculator.getStartTime());
                 receiptArea.setText("Payment successful!\n\n" + receipt);
+
+                String finalReceipt = currentCalculator.displayFinalReceipt(receipt);
+                receiptArea.setText(finalReceipt);
+                javax.swing.JDialog receiptDialog = new javax.swing.JDialog();
+                receiptDialog.setTitle("Transaction Receipt - " + plate);
+                receiptDialog.add(receiptArea);
+                receiptDialog.setSize(400, 550);
+                receiptDialog.setLocationRelativeTo(null); // Center on screen
+                receiptDialog.setModal(true); // User must close it to continue
+                receiptDialog.setVisible(true);
             } else {
                 receiptArea.setText("Payment failed. Please try again.");
             }
+
+
 
             
         }

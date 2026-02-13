@@ -396,6 +396,14 @@ public String getFinalReceipt(String plate , String paymentMethod , double total
 
 
 
-
 }
+
+public String displayFinalReceipt(String receiptContent) {
+    return "********** FINAL RECEIPT **********\n" +
+           receiptContent +
+           "\n***********************************";
+}
+
+
+
 }

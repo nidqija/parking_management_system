@@ -1,6 +1,7 @@
 package Model;
 
 
+import Controller.Fines;
 import Controller.ParkingFine;
 import java.sql.Connection;
 import java.time.LocalDateTime;
@@ -97,44 +98,69 @@ public class CalculatorFee {
 }
 
 public String processExit(String plate) {
+    String entryTimeStr = null;
+    double hourlyRate = 0.0;
+    String ticketID = null;
+
+    // PHASE 1: Data Collection
+    // We open the connection, get what we need, and close it IMMEDIATELY.
     try (Connection conn = new Data.Sqlite().connect()) {
-        String sql = "SELECT t.entry_time, s.hourly_rate FROM Tickets t " +
+        String sql = "SELECT t.entry_time, s.hourly_rate, t.ticket_number FROM Tickets t " +
                      "JOIN Parking_Spots s ON t.spot_id = s.spot_id " +
                      "WHERE t.license_plate = ? AND t.exit_time IS NULL";
 
-        var pstmt = conn.prepareStatement(sql);
-        pstmt.setString(1, plate);
-        var rs = pstmt.executeQuery();
-
-        if (rs.next()) {
-            String entryTimeStr = rs.getString("entry_time");
-            double hourlyRate = rs.getDouble("hourly_rate");
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            
-            // USE SYSTEM LOCAL TIME
-            java.time.LocalDateTime currentTime = java.time.LocalDateTime.now();
-
-            this.lastHours = calculateHour(entryTimeStr);
-            this.baseFee = calculateBaseFee(hourlyRate, this.lastHours);
-            
-            String schemeStr = ParkingFine.getInstance().getActiveFineScheme();
-            int fineOption = mapSchemeToOption(schemeStr);
-            this.fineAmount = calculateFine(fineOption, this.baseFee, (int)this.lastHours);
-
-            // Convert to EpochSecond using the system default offset
-            this.startTime = java.time.LocalDateTime.parse(entryTimeStr, formatter)
-                                .atZone(java.time.ZoneId.systemDefault())
-                                .toEpochSecond();
-
-             return String.format("\n\n====================Payment Details====================\n Base Fee: RM %.2f,\n Fine: RM %.2f \n Start Time: %s\n End Time: %s\n Parked for: %d hours parked.\n======================================================\n", 
-                                     this.baseFee, this.fineAmount, entryTimeStr, currentTime.format(formatter), this.lastHours);
-
+        try (java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, plate);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    entryTimeStr = rs.getString("entry_time");
+                    hourlyRate = rs.getDouble("hourly_rate");
+                    ticketID = rs.getString("ticket_number");
+                }
+            }
         }
     } catch (Exception e) {
         e.printStackTrace();
-        return "Error: " + e.getMessage();
+        return "Error reading ticket: " + e.getMessage();
     }
-    return "No active ticket found for plate: " + plate;
+
+    // PHASE 2: Logic & Calculations
+    // If no ticket was found, we exit early before touching the Fines logic.
+    if (ticketID == null) {
+        return "No active ticket found for plate: " + plate;
+    }
+
+    // Perform calculations (No database connection is open here)
+    this.lastHours = calculateHour(entryTimeStr);
+    this.baseFee = calculateBaseFee(hourlyRate, this.lastHours);
+    
+    String schemeStr = ParkingFine.getInstance().getActiveFineScheme();
+    int fineOption = mapSchemeToOption(schemeStr);
+    
+    // Calculate the fine for THIS specific session
+    double currentSessionFine = calculateFine(fineOption, this.baseFee, (int)this.lastHours);
+
+    // Get historical unpaid fines from the ledger
+    Fines fineController = new Fines();
+    double historicalFines = fineController.getUnpaidLedgerTotal(plate);
+    
+    // Total fine displayed to user = Current Stay Fine + Old Unpaid Fines
+    this.fineAmount = historicalFines + currentSessionFine;
+
+    // PHASE 3: Record Fine
+    // Only record to the ledger if the current session actually generated a fine.
+    if (currentSessionFine > 0) {
+        // This method opens its own fresh connection to WRITE.
+        fineController.checkAndRecordFine(plate, "OVERSTAY", currentSessionFine, ticketID);
+    }
+
+    // Set start time for receipt generation
+    this.startTime = java.time.LocalDateTime.parse(entryTimeStr, formatter)
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toEpochSecond();
+
+    return String.format("... Base Fee: RM %.2f, \n Current Fine: RM %.2f, \n Past Unpaid: RM %.2f ...", 
+                         this.baseFee, currentSessionFine, historicalFines);
 }
 
  

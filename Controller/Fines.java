@@ -125,6 +125,8 @@ public class Fines {
         if (rs.next()) {
             total = rs.getDouble(1);
         }
+
+        
     } catch (Exception e) {
         System.err.println("Error calculating unpaid fines total: " + e.getMessage());
     }

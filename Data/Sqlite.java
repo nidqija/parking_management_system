@@ -313,21 +313,14 @@
 
                         // Tickets to test fine
 
-                        stmt.execute(
-                                "INSERT OR IGNORE INTO Tickets (ticket_number, license_plate, spot_id, entry_time, payment_status) "
-                                        +
-                                        "VALUES ('T-FINE-001', 'TEST-FINE', 'F1-R1-S2', datetime('now', '-99 hours'), 'PAID');");
+                       
 
                         stmt.execute(
                                 "INSERT OR IGNORE INTO Tickets (ticket_number, license_plate, spot_id, entry_time, payment_status) "
                                         +
                                         "VALUES ('T-FINE-002', 'TEST-FINE', 'F1-R1-S3', datetime('now', '-50 hours'), 'PAID');");
 
-                        stmt.execute(
-                                "INSERT OR IGNORE INTO Tickets (ticket_number, license_plate, spot_id, entry_time, payment_status) "
-                                        +
-                                        "VALUES ('T-FINE-003', 'TEST-FINE', 'F1-R1-S4', datetime('now', '-25 hours'), 'UNPAID');");
-
+                       
                         // E. Insert Historical Data (Fines)
                         // ------------------------------------------------------------
                         // BAD-5555 Left without paying a previous fine

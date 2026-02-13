@@ -1,11 +1,9 @@
 package View;
 
-import View.MainFrame;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-
 import javax.swing.*;
 
 public class Homepage extends JPanel {
@@ -36,6 +34,11 @@ public class Homepage extends JPanel {
         signUpButton.setMaximumSize(new Dimension(200, 40));
         signUpButton.addActionListener(e -> mainFrame.showPage("EntryPanel"));
 
+        JButton reserveButton = new JButton("Reserve Spot");
+        reserveButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        reserveButton.setMaximumSize(new Dimension(200, 40));
+        reserveButton.addActionListener(e -> mainFrame.showPage("ReservePanel"));
+
         // Exit button
         JButton exitButton = new JButton("Exit Carpark");
         exitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -46,6 +49,8 @@ public class Homepage extends JPanel {
         card.add(label);
         card.add(Box.createRigidArea(new Dimension(0, 30)));
         card.add(loginButton);
+        card.add(Box.createRigidArea(new Dimension(0, 15)));
+        card.add(reserveButton);
         card.add(Box.createRigidArea(new Dimension(0, 15)));
         card.add(signUpButton);
         card.add(Box.createRigidArea(new Dimension(0, 15)));

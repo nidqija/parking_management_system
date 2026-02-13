@@ -283,7 +283,7 @@ public double getRevenue(String dateFrom , String dateTo){
 
 public boolean processFinalPayment(String plate, double amountPaid, long hours , String paymentMethod){ {
     try (Connection conn = new Data.Sqlite().connect()) {
-
+       conn.setAutoCommit(false); // Enable transaction for data safety
        String sql = "UPDATE Tickets SET payment_status = 'PAID', exit_time = datetime('now'), " +
                  "parking_fee = ?, duration_hours = ? , payment_method = ? " +
                  "WHERE license_plate = ? AND payment_status = 'UNPAID'";
@@ -292,18 +292,41 @@ public boolean processFinalPayment(String plate, double amountPaid, long hours ,
         var pstmt = conn.prepareStatement(sql);
 
 
-        pstmt.setDouble(1, amountPaid); // matches first ?
+        pstmt.setDouble(1, this.baseFee); // matches first ?
         pstmt.setLong(2, hours);       // matches second ?
         pstmt.setString(3, paymentMethod);
         pstmt.setString(4, plate);
+
         int rowsUpdated = pstmt.executeUpdate();
         
         if (rowsUpdated > 0){
 
-            String updatedFineLedger = "UPDATE Fines_Ledger SET status = 'PAID' WHERE license_plate = ? AND status = 'UNPAID'";
-            var pstmt1 = conn.prepareStatement(updatedFineLedger);
-            pstmt1.setString(1, plate);
-            pstmt1.executeUpdate();
+            double balanceForFines = amountPaid - this.baseFee;
+            if (balanceForFines > 0) {
+                String selectFineLedger = "SELECT fine_id , amount AS total_fines FROM Fines_Ledger WHERE license_plate = ? AND status = 'UNPAID' ORDER BY created_at ASC";
+                var pstmtFine = conn.prepareStatement(selectFineLedger);
+                pstmtFine.setString(1, plate);
+                var rs = pstmtFine.executeQuery();
+
+                String fineUpdate = "UPDATE Fines_Ledger SET status = 'PAID' WHERE fine_id = ?";
+                var pstmtUpdateFine = conn.prepareStatement(fineUpdate);
+
+
+                while (rs.next() && balanceForFines > 0) {
+                    int fineID = rs.getInt("fine_id");
+                    double fineAmount = rs.getDouble("total_fines");
+
+                    if (balanceForFines >= fineAmount) {
+                        pstmtUpdateFine.setInt(1, fineID);
+                        pstmtUpdateFine.executeUpdate();
+                        balanceForFines -= fineAmount;
+                    } else {
+                        break; 
+                    }
+                    
+                }
+            }
+            
 
 
             String updateSpotSQL = "UPDATE Parking_Spots SET status = 'AVAILABLE', current_vehicle_plate = NULL " +
@@ -312,6 +335,9 @@ public boolean processFinalPayment(String plate, double amountPaid, long hours ,
             var pstmt2 = conn.prepareStatement(updateSpotSQL);
             pstmt2.setString(1, plate);
             pstmt2.executeUpdate();
+
+
+            conn.commit();
 
             return  true;
 
@@ -330,6 +356,13 @@ public boolean processFinalPayment(String plate, double amountPaid, long hours ,
 public String getFinalReceipt(String plate , String paymentMethod , double totalPaid , double fineAmount , double baseFee , long hours , long startTime){ {
     ZoneOffset currentOffset = ZoneId.systemDefault().getRules().getOffset(LocalDateTime.now());
     LocalDateTime entryDateTime = LocalDateTime.ofEpochSecond(startTime, 0, currentOffset);
+    double totalOwed = baseFee + fineAmount;
+    double change = totalPaid - totalOwed;
+
+    double balanceDue = (change < 0) ? Math.abs(change) : 0.00;
+    double changeGiven = (change > 0) ? change : 0.00;
+
+
      
   return "==========================================\n" +
            "           PARKING OFFICIAL RECEIPT       \n" +
@@ -348,7 +381,10 @@ public String getFinalReceipt(String plate , String paymentMethod , double total
            "TOTAL PAID    : RM " + totalPaid + "\n" +
            "Balance       : RM 0.00\n" +
            "==========================================\n" +
-           "      THANK YOU! HAVE A SAFE TRIP         \n";
+           "      THANK YOU! HAVE A SAFE TRIP         \n" +
+           "BALANCE DUE   : RM " + String.format("%.2f", balanceDue) + "\n" + 
+           "CHANGE GIVEN  : RM " + String.format("%.2f", changeGiven) + "\n" +
+           "==========================================";
 
 }
 

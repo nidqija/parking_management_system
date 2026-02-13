@@ -23,6 +23,7 @@ public class ExitPanel extends JPanel {
     private JTextArea receiptArea;
     private JComboBox <String> paymentMethodComboBox;
     private CalculatorFee currentCalculator;
+    private JTextField totalAmountField;
 
   
 
@@ -75,6 +76,17 @@ public class ExitPanel extends JPanel {
 
 // 4. Process Payment Button
 
+        add(Box.createRigidArea(new Dimension(0, 20)));
+
+        JLabel totalAmountLabel = new JLabel("Total Amount (RM):");
+        add(totalAmountLabel);
+
+
+        totalAmountField = new JTextField(10);
+        totalAmountField.setEditable(true);
+        add(totalAmountField);
+        
+
         JPanel btnPanel = new JPanel(new FlowLayout());
         JButton btnProcessPayment = new JButton("Process Payment & Exit");
         btnPanel.add(btnProcessPayment);
@@ -85,6 +97,7 @@ public class ExitPanel extends JPanel {
 
         btnProcessPayment.addActionListener(e -> handlePayment());
 
+        add(Box.createRigidArea(new Dimension(0, 20)));
 
         JButton backButton = new JButton("Back to Main Menu");
         backButton.addActionListener(e -> {
@@ -135,11 +148,21 @@ public class ExitPanel extends JPanel {
             double grandTotal = currentCalculator.getTotalAmount() + unpaidHistorical;
             String custPaymentMethod = (String) paymentMethodComboBox.getSelectedItem();
 
-            boolean paymentSuccess = currentCalculator.processFinalPayment(plate, grandTotal, currentCalculator.getLastHours() , custPaymentMethod);
+            double amountEntered;
+
+            try {
+                amountEntered = Double.parseDouble(totalAmountField.getText().trim());
+
+            } catch (Exception e) {
+                receiptArea.setText("Please enter a valid amount for payment.");
+                return;
+            }
+
+            boolean paymentSuccess = currentCalculator.processFinalPayment(plate, amountEntered , currentCalculator.getLastHours() , custPaymentMethod);
 
             if (paymentSuccess) {
                 String receipt = currentCalculator.getFinalReceipt(plate, paymentMethod, 
-                                                grandTotal, 
+                                                amountEntered, 
                                                 currentCalculator.getFineAmount() , 
                                                 currentCalculator.getBaseFee() , 
                                                 currentCalculator.getLastHours() , 

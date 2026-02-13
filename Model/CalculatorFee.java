@@ -22,6 +22,9 @@ public class CalculatorFee {
     private double fineAmount;
     private long lastHours;
     private long startTime;
+    private long endTime;
+    private String ticketNumber;
+    private String spotId;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
 
@@ -43,12 +46,26 @@ public class CalculatorFee {
         return lastHours;
     }
 
+    
+
     public double getTotalAmount(){
         return baseFee + fineAmount;
     }
 
     public long getStartTime(){
         return startTime;
+    }
+
+    public String getTicketNumber(){
+        return this.ticketNumber;
+    }
+
+    public String getSpotId(){
+        return this.spotId;
+    }
+
+    public long getEndTime(){
+        return this.endTime;
     }
 
     
@@ -105,7 +122,7 @@ public String processExit(String plate) {
     // PHASE 1: Data Collection
     // We open the connection, get what we need, and close it IMMEDIATELY.
     try (Connection conn = new Data.Sqlite().connect()) {
-        String sql = "SELECT t.entry_time, s.hourly_rate, t.ticket_number FROM Tickets t " +
+        String sql = "SELECT t.entry_time, s.hourly_rate, t.spot_id, t.ticket_number FROM Tickets t " +
                      "JOIN Parking_Spots s ON t.spot_id = s.spot_id " +
                      "WHERE t.license_plate = ? AND t.exit_time IS NULL";
 
@@ -116,6 +133,13 @@ public String processExit(String plate) {
                     entryTimeStr = rs.getString("entry_time");
                     hourlyRate = rs.getDouble("hourly_rate");
                     ticketID = rs.getString("ticket_number");
+                    spotId = rs.getString("spot_id");
+
+                    this.ticketNumber = ticketID;
+                    this.spotId = spotId;
+
+                    System.out.println("Found ticket number " + ticketID + " for plate " + plate);
+                    
                 }
             }
         }
@@ -403,6 +427,10 @@ public String displayFinalReceipt(String receiptContent) {
            receiptContent +
            "\n***********************************";
 }
+
+
+
+
 
 
 

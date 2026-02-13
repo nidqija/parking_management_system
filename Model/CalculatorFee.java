@@ -192,9 +192,9 @@ public String processExit(String plate) {
         double totalPreviousFines = 0.0;
         try (Connection conn = new Data.Sqlite().connect()) {
 
-             String sql = "SELECT SUM(parking_fee) AS total_fines " +
-             "FROM Tickets " +
-             "WHERE license_plate = ? AND payment_status = 'PAID'";
+             String sql = "SELECT SUM(amount) AS total_fines " +
+             "FROM Fines_Ledger " +
+             "WHERE license_plate = ? AND status = 'UNPAID' ";
 
             var pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, plate);
@@ -305,12 +305,12 @@ public double getRevenue(String dateFrom , String dateTo){
 }
 
 
-public boolean processFinalPayment(String plate, double amountPaid, long hours , String paymentMethod){ {
+public boolean processFinalPayment(String plate, double amountPaid, long hours , String paymentMethod){
     try (Connection conn = new Data.Sqlite().connect()) {
        conn.setAutoCommit(false); // Enable transaction for data safety
        String sql = "UPDATE Tickets SET payment_status = 'PAID', exit_time = datetime('now'), " +
-                 "parking_fee = ?, duration_hours = ? , payment_method = ? " +
-                 "WHERE license_plate = ? AND payment_status = 'UNPAID'";
+                     "parking_fee = ?, duration_hours = ?, payment_method = ? " +
+                     "WHERE license_plate = ? AND exit_time IS NULL";
 
 
         var pstmt = conn.prepareStatement(sql);
@@ -373,7 +373,7 @@ public boolean processFinalPayment(String plate, double amountPaid, long hours ,
 
     }
     return false;
-}
+
 }
 
 
@@ -385,6 +385,35 @@ public String getFinalReceipt(String plate , String paymentMethod , double total
 
     double balanceDue = (change < 0) ? Math.abs(change) : 0.00;
     double changeGiven = (change > 0) ? change : 0.00;
+
+
+    if (balanceDue > 0) {
+        System.out.println("Payment incomplete. Balance due: RM " + String.format("%.2f", balanceDue));
+   
+    try (Connection conn = new Data.Sqlite().connect()) {
+        
+   
+    String ledgerSql = "UPDATE Fines_Ledger SET status = 'UNPAID', amount = ? " +
+                       "WHERE license_plate = ? AND ticket_ref = ? AND status = 'UNPAID'";
+    
+    var pstmtLedger = conn.prepareStatement(ledgerSql);
+    pstmtLedger.setDouble(1, balanceDue);   // The remaining debt
+    pstmtLedger.setString(2, plate);        // The car plate
+    pstmtLedger.setString(3, this.ticketNumber); // The specific ticket reference
+    
+    pstmtLedger.executeUpdate();
+    
+ 
+}
+    catch (Exception e) {
+        e.printStackTrace();
+        return "Error processing record: " + e.getMessage();
+    }
+
+    } else {
+        System.out.println("Payment complete. No balance due.");
+    }
+    
 
 
      

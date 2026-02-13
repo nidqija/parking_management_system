@@ -6,6 +6,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.sql.Connection;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -128,11 +129,11 @@ public class ExitPanel extends JPanel {
             String result = currentCalculator.processExit(plate);
             receiptArea.append(result);
             double unpaidFines = currentCalculator.getPreviousFines(plate); 
-    if (unpaidFines > 0) {
-        receiptArea.append(String.format("\n!!! OUTSTANDING BALANCE FOUND !!!\n"));
-        receiptArea.append(String.format("Historical Unpaid Fines: RM %.2f\n", unpaidFines));
-        receiptArea.append(String.format("TOTAL TO PAY: RM %.2f\n", (currentCalculator.getTotalAmount() + unpaidFines)));
-    }
+           if (unpaidFines > 0) {
+           receiptArea.append(String.format("\n!!! OUTSTANDING BALANCE FOUND !!!\n"));
+           receiptArea.append(String.format("Historical Unpaid Fines: RM %.2f\n", unpaidFines));
+           receiptArea.append(String.format("TOTAL TO PAY: RM %.2f\n", currentCalculator.getTotalAmount()));
+          }
             
         }
 
@@ -146,7 +147,7 @@ public class ExitPanel extends JPanel {
             String plate = plateSearchField.getText().trim();
             String paymentMethod = (String) paymentMethodComboBox.getSelectedItem();
             double unpaidHistorical = currentCalculator.getPreviousFines(plate);
-            double grandTotal = currentCalculator.getTotalAmount() + unpaidHistorical;
+            double grandTotal = unpaidHistorical + currentCalculator.getTotalAmount();
             String custPaymentMethod = (String) paymentMethodComboBox.getSelectedItem();
 
             double amountEntered;
@@ -169,6 +170,23 @@ public class ExitPanel extends JPanel {
                                                 currentCalculator.getLastHours() , 
                                                 currentCalculator.getStartTime());
                 receiptArea.setText("Payment successful!\n\n" + receipt);
+                
+
+                try (Connection conn = new Data.Sqlite().connect()) {
+    // If the amount entered covers the total (Base Fee + Fines)
+    if (amountEntered >= currentCalculator.getTotalAmount()) {
+        String updateFinesSQL = "UPDATE Fines_Ledger SET status = 'PAID' WHERE license_plate = ? AND status = 'UNPAID'";
+        var pstmt = conn.prepareStatement(updateFinesSQL);
+        pstmt.setString(1, plate);
+        pstmt.executeUpdate();
+    } else {
+        // Optional: Handle partial payment logic here if your system allows it
+        // by updating only specific fine_ids until the amountEntered is exhausted.
+    }
+} catch (Exception e) {
+    e.printStackTrace();
+}
+                
 
                   Receipts receiptModel = new Receipts();
                 receiptModel.insertReceipt(

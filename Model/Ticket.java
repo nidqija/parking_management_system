@@ -18,6 +18,7 @@ public class Ticket {
     private Vehicle vehicle;
     private String spotID;
     private LocalDateTime entryTime;
+    private boolean reservedViolation = false;
 
     // 1. Database FORMAT, so that easy to query later, this is what will be stored in DB
     private static final DateTimeFormatter DB_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -25,21 +26,57 @@ public class Ticket {
     // 2. REQUIREMENT FORMAT, this is what will be displayed on ticket
     private static final DateTimeFormatter ID_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
 
+
+     private void detectReservedViolation() {
+    String sql =
+        "SELECT r.license_plate " +
+        "FROM Parking_Spots s " +
+        "LEFT JOIN Reservations r ON s.spot_id = r.spot_id " +
+        "AND datetime('now') BETWEEN r.start_time AND r.end_time " +
+        "WHERE s.spot_id = ? AND s.is_reserved = 1";
+
+    try (Connection conn = DriverManager.getConnection(DB_URL);
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+        pstmt.setString(1, this.spotID);
+        ResultSet rs = pstmt.executeQuery();
+
+        if (rs.next()) {
+            String reservedPlate = rs.getString("license_plate");
+
+            if (reservedPlate == null ||
+                !reservedPlate.equals(vehicle.getPlateNumber())) {
+                reservedViolation = true;
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+
+    public boolean hasReservedViolation() {
+        return reservedViolation;
+    }
+
     private static final String DB_URL = "jdbc:sqlite:Data/Parking_Management_System.db";
     public Ticket(Vehicle vehicle, String spotID) {
         this.vehicle = vehicle;
         this.spotID = spotID;
         this.entryTime = LocalDateTime.now().withNano(0);
         this.ticketID = generateTicketID();
+        detectReservedViolation();
 
         saveToDB();
     }
+
+    
 
     public Ticket(String ticketID, Vehicle vehicle, String spotID, LocalDateTime entryTime) {
     this.ticketID = ticketID;
     this.vehicle = vehicle;
     this.spotID = spotID;
     this.entryTime = entryTime;
+    detectReservedViolation();
 }
 
     private String generateTicketID() {

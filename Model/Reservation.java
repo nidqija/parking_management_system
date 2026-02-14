@@ -39,43 +39,48 @@ public class Reservation {
 
         //for if a vehicle tries to park in a reserved spot without a reservation, or with the wrong plate
         public void checkReservationViolations() {
-        //1 = reserved violation, 0 = no violation    
-        String query = "SELECT spot_id, current_vehicle_plate, reserved_for_plate " +
-                    "FROM Parking_Spots " +
-                    "WHERE spot_type = 'RESERVED' AND status = 'OCCUPIED'";
+    // 1. Get all occupied reserved spots
+    String querySpots = "SELECT spot_id, current_vehicle_plate, reserved_for_plate " +
+                        "FROM Parking_Spots " +
+                        "WHERE spot_type = 'RESERVED' AND status = 'OCCUPIED'";
 
-        String updateTicket = "UPDATE Tickets " +
-                            "SET reserved_violation = 1 " +
-                            "WHERE license_plate = ? AND payment_status = 'UNPAID'";
+    // 2. Prepare the update statement with a placeholder (?) for the license plate
+    String updateTicket = "UPDATE Tickets " +
+                          "SET reserved_violation = 1 " +
+                          "WHERE license_plate = ? AND payment_status = 'UNPAID'";
 
-        Sqlite db = new Sqlite();
+    Sqlite db = new Sqlite();
 
-        try (Connection conn = db.connect();
-            PreparedStatement pstmtSelect = conn.prepareStatement(query);
-            ResultSet rs = pstmtSelect.executeQuery()) {
+    try (Connection conn = db.connect();
+         PreparedStatement pstmtSelect = conn.prepareStatement(querySpots);
+         ResultSet rs = pstmtSelect.executeQuery()) {
 
-            while (rs.next()) {
-                String spotId = rs.getString("spot_id");
-                String currentPlate = rs.getString("current_vehicle_plate");
-                String reservedPlate = rs.getString("reserved_for_plate");
+        // Loop through every occupied reserved spot
+        while (rs.next()) {
+            String spotId = rs.getString("spot_id");
+            String currentPlate = rs.getString("current_vehicle_plate");
+            String reservedPlate = rs.getString("reserved_for_plate");
 
-                //  If there is a car there AND (no one is reserved OR it's the wrong car)
-                if (currentPlate != null && !currentPlate.equalsIgnoreCase(reservedPlate)) {
+            // Check if a vehicle is there, and if it DOES NOT match the reserved plate.
+            // (If reservedPlate is null, equalsIgnoreCase(null) returns false, so !false becomes true = Violation)
+            if (currentPlate != null && !currentPlate.equalsIgnoreCase(reservedPlate)) {
+                
+                // Vehicle doesn't match! Execute the update for this specific vehicle.
+                try (PreparedStatement pstmtUpdate = conn.prepareStatement(updateTicket)) {
+                   
+                    pstmtUpdate.setString(1, currentPlate); 
                     
-                    try (PreparedStatement pstmtUpdate = conn.prepareStatement(updateTicket)) {
-                        pstmtUpdate.setString(1, currentPlate);
-                        pstmtUpdate.setString(2, spotId);
-                        
-                        int rowsAffected = pstmtUpdate.executeUpdate();
-                        if (rowsAffected > 0) {
-                            System.out.println("Violation Flagged: Vehicle " + currentPlate + 
-                                            " is illegally parked in reserved spot " + spotId);
-                        }
+                    int rowsAffected = pstmtUpdate.executeUpdate();
+                    
+                    if (rowsAffected > 0) {
+                        System.out.println("Violation Flagged: Vehicle " + currentPlate + 
+                                           " is illegally parked in reserved spot " + spotId);
                     }
                 }
             }
-        } catch (SQLException e) {
-            System.err.println("Error checking violations: " + e.getMessage());
         }
+    } catch (SQLException e) {
+        System.err.println("Error checking violations: " + e.getMessage());
     }
+}
 }

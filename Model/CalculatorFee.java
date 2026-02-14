@@ -118,11 +118,12 @@ public String processExit(String plate) {
     String entryTimeStr = null;
     double hourlyRate = 0.0;
     String ticketID = null;
+    Integer reservationId = null;
 
     // PHASE 1: Data Collection
     // We open the connection, get what we need, and close it IMMEDIATELY.
     try (Connection conn = new Data.Sqlite().connect()) {
-        String sql = "SELECT t.entry_time, s.hourly_rate, t.spot_id, t.ticket_number FROM Tickets t " +
+        String sql = "SELECT t.entry_time, s.hourly_rate, t.spot_id, t.ticket_number, t.reservation_id FROM Tickets t " +
                      "JOIN Parking_Spots s ON t.spot_id = s.spot_id " +
                      "WHERE t.license_plate = ? AND t.exit_time IS NULL";
 
@@ -134,11 +135,20 @@ public String processExit(String plate) {
                     hourlyRate = rs.getDouble("hourly_rate");
                     ticketID = rs.getString("ticket_number");
                     spotId = rs.getString("spot_id");
+                    
+                    // Check if ticket has a reservation_id
+                    Object reservationIdObj = rs.getObject("reservation_id");
+                    if (reservationIdObj != null) {
+                        reservationId = rs.getInt("reservation_id");
+                    }
 
                     this.ticketNumber = ticketID;
                     this.spotId = spotId;
 
                     System.out.println("Found ticket number " + ticketID + " for plate " + plate);
+                    if (reservationId != null) {
+                        System.out.println("Ticket linked to reservation ID: " + reservationId);
+                    }
                     
                 }
             }
@@ -154,19 +164,40 @@ public String processExit(String plate) {
         return "No active ticket found for plate: " + plate;
     }
 
-    // Perform calculations (No database connection is open here)
+    // Calculate hours parked
     this.lastHours = calculateHour(entryTimeStr);
-    this.baseFee = calculateBaseFee(hourlyRate, this.lastHours );
+
+    // ALWAYS retrieve historical unpaid fines (regardless of reservation status)
+    Fines fineController = new Fines();
+    double historicalFines = fineController.getUnpaidLedgerTotal(plate);
+
+    // Check if this is a reserved parking with valid reservation
+    if (reservationId != null && isReservationValid(reservationId)) {
+        // Charge RM 10 per hour for reservations
+        this.baseFee = 10.0 * this.lastHours;
+        double currentSessionFine = 0.0; // No new fine for valid reservation
+        
+        // fineAmount must include historical unpaid fines
+        this.fineAmount = historicalFines + currentSessionFine;
+        
+        this.startTime = java.time.LocalDateTime.parse(entryTimeStr, formatter)
+                            .atZone(java.time.ZoneId.systemDefault())
+                            .toEpochSecond();
+        
+        return String.format("... Reserved Parking Fee: RM %.2f (RM 10/hour x %d hours) ...\n" +
+                             "Past Unpaid Fines: RM %.2f\n" +
+                             "TOTAL AMOUNT: RM %.2f", 
+                             this.baseFee, this.lastHours, historicalFines, getTotalAmount());
+    }
+
+    // Normal parking calculation (non-reserved or invalid reservation)
+    this.baseFee = calculateBaseFee(hourlyRate, this.lastHours);
     
     String schemeStr = ParkingFine.getInstance().getActiveFineScheme();
     int fineOption = mapSchemeToOption(schemeStr);
     
     // Calculate the fine for THIS specific session
     double currentSessionFine = calculateFine(fineOption, this.baseFee, (int)this.lastHours);
-
-    // Get historical unpaid fines from the ledger
-    Fines fineController = new Fines();
-    double historicalFines = fineController.getUnpaidLedgerTotal(plate);
     
     // Total fine displayed to user = Current Stay Fine + Old Unpaid Fines
     this.fineAmount = historicalFines + currentSessionFine;
@@ -239,6 +270,34 @@ public double getRevenue(String dateFrom , String dateTo){
 
 
 
+
+    /**
+     * Helper method to verify if a reservation exists in the Reservations table
+     * @param reservationId The reservation ID to validate
+     * @return true if reservation exists, false otherwise
+     */
+    private boolean isReservationValid(Integer reservationId) {
+        if (reservationId == null) {
+            return false;
+        }
+        
+        try (Connection conn = new Data.Sqlite().connect()) {
+            String sql = "SELECT 1 FROM Reservations WHERE reservation_id = ?";
+            try (java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, reservationId);
+                try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                    boolean exists = rs.next();
+                    System.out.println("Reservation ID " + reservationId + " validation: " + 
+                                       (exists ? "VALID" : "INVALID"));
+                    return exists;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error validating reservation: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     private long calculateHour(String entryTimeStr) {
         java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

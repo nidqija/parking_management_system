@@ -98,8 +98,10 @@
                                 "parking_fee FLOAT, " +
                                 "payment_method TEXT, " +
                                 "payment_status TEXT DEFAULT 'UNPAID' , " +
+                                "reservation_id INTEGER, " +
                                 "FOREIGN KEY (license_plate) REFERENCES Vehicles(license_plate), " +
-                                "FOREIGN KEY (spot_id) REFERENCES Parking_Spots(spot_id)" +
+                                "FOREIGN KEY (spot_id) REFERENCES Parking_Spots(spot_id), " +
+                                "FOREIGN KEY (reservation_id) REFERENCES Reservations(reservation_id)" +
                                 ");";
                         stmt.execute(tb_tickets);
 

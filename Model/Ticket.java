@@ -18,6 +18,9 @@ public class Ticket {
     private Vehicle vehicle;
     private String spotID;
     private LocalDateTime entryTime;
+    private boolean reservedViolation;
+
+          
 
     // 1. Database FORMAT, so that easy to query later, this is what will be stored in DB
     private static final DateTimeFormatter DB_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -25,21 +28,61 @@ public class Ticket {
     // 2. REQUIREMENT FORMAT, this is what will be displayed on ticket
     private static final DateTimeFormatter ID_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
 
+
+     private void detectReservedViolation() {
+        reservedViolation = false; // default to false
+
+          String sql =
+            "SELECT r.license_plate " +
+            "FROM Parking_Spots s " +
+            "LEFT JOIN Reservations r ON s.spot_id = r.spot_id " +
+            "AND datetime('now') BETWEEN r.start_time AND r.end_time " +
+            "WHERE s.spot_id = ? AND s.spot_type = 'RESERVED'";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, this.spotID);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                String reservedPlate = rs.getString("license_plate");
+
+                if (reservedPlate == null ||
+                    !reservedPlate.equals(vehicle.getPlateNumber())) {
+                    reservedViolation = true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean hasReservedViolation() {
+        return reservedViolation;
+    }
+
+    
+
     private static final String DB_URL = "jdbc:sqlite:Data/Parking_Management_System.db";
     public Ticket(Vehicle vehicle, String spotID) {
         this.vehicle = vehicle;
         this.spotID = spotID;
         this.entryTime = LocalDateTime.now().withNano(0);
         this.ticketID = generateTicketID();
+        detectReservedViolation();
 
         saveToDB();
     }
+
+    
 
     public Ticket(String ticketID, Vehicle vehicle, String spotID, LocalDateTime entryTime) {
     this.ticketID = ticketID;
     this.vehicle = vehicle;
     this.spotID = spotID;
     this.entryTime = entryTime;
+    detectReservedViolation();
 }
 
     private String generateTicketID() {
@@ -66,7 +109,7 @@ public class Ticket {
         String checkReservationSQL = "SELECT reservation_id FROM Reservations " +
                                       "WHERE license_plate = ? AND spot_id = ? AND status = 'ACTIVE' " +
                                       "LIMIT 1";
-        String insertTicketSQL = "INSERT INTO Tickets(ticket_number, license_plate, spot_id, entry_time, payment_status, reservation_id) VALUES(?,?,?,?,?,?)";
+      String insertTicketSQL = "INSERT INTO Tickets(ticket_number, license_plate, spot_id, entry_time, payment_status, reservation_id, reserved_violation) " +"VALUES(?,?,?,?,?,?,?)";
         String updateSpotSQL = "UPDATE Parking_Spots SET status = 'OCCUPIED', current_vehicle_plate = ? WHERE spot_id = ?";
         String updateReservationSQL = "UPDATE Reservations SET status = 'COMPLETED' WHERE reservation_id = ?";
 
@@ -98,6 +141,8 @@ public class Ticket {
                 } else {
                     pstmt.setNull(6, java.sql.Types.INTEGER);
                 }
+                //violation status (1 for true, 0 for false)
+                pstmt.setInt(7, reservedViolation ? 1 : 0);
                 pstmt.executeUpdate();
             }
 

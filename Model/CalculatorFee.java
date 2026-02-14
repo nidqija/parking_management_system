@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import Model.Reservation;
 
 
 public class CalculatorFee implements FineInterface {
@@ -26,6 +27,7 @@ public class CalculatorFee implements FineInterface {
     private String ticketNumber;
     private String spotId;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    boolean reservedViolation;
 
 
 
@@ -67,6 +69,9 @@ public class CalculatorFee implements FineInterface {
     public long getEndTime(){
         return this.endTime;
     }
+
+
+
 
     
 
@@ -115,6 +120,10 @@ public class CalculatorFee implements FineInterface {
 }
 
 public String processExit(String plate) {
+
+    Reservation reservationModel = new Reservation();
+    reservationModel.checkReservationViolations();
+    
     String entryTimeStr = null;
     double hourlyRate = 0.0;
     String ticketID = null;
@@ -123,7 +132,7 @@ public String processExit(String plate) {
     // PHASE 1: Data Collection
     // We open the connection, get what we need, and close it IMMEDIATELY.
     try (Connection conn = new Data.Sqlite().connect()) {
-        String sql = "SELECT t.entry_time, s.hourly_rate, t.spot_id, t.ticket_number, t.reservation_id FROM Tickets t " +
+        String sql = "SELECT t.entry_time, s.hourly_rate, t.spot_id, t.ticket_number,t.reservation_id, t.reserved_violation FROM Tickets t " +
                      "JOIN Parking_Spots s ON t.spot_id = s.spot_id " +
                      "WHERE t.license_plate = ? AND t.exit_time IS NULL";
 
@@ -144,6 +153,8 @@ public String processExit(String plate) {
 
                     this.ticketNumber = ticketID;
                     this.spotId = spotId;
+                    //1 means true, 0 means false in SQLite for boolean fields
+                    this.reservedViolation = rs.getInt("reserved_violation") == 1;
 
                     System.out.println("Found ticket number " + ticketID + " for plate " + plate);
                     if (reservationId != null) {
@@ -208,6 +219,14 @@ public String processExit(String plate) {
         // This method opens its own fresh connection to WRITE.
         fineController.checkAndRecordFine(plate, "OVERSTAY", currentSessionFine, ticketID);
     }
+    
+    
+    if (this.reservedViolation) {
+    fineController.checkAndRecordFine(plate, "RESERVED", 200.0, ticketID);
+    currentSessionFine += 200.0;
+    this.fineAmount = historicalFines + currentSessionFine;
+    }
+    
 
     // Set start time for receipt generation
     this.startTime = java.time.LocalDateTime.parse(entryTimeStr, formatter)
@@ -219,6 +238,8 @@ public String processExit(String plate) {
 }
 
  
+    
+
     public double getPreviousFines(String plate){
         double totalPreviousFines = 0.0;
         try (Connection conn = new Data.Sqlite().connect()) {

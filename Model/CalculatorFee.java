@@ -194,8 +194,9 @@ public String processExit(String plate) {
     if (this.reservedViolation) {
     fineController.checkAndRecordFine(plate, "RESERVED", 200.0, ticketID);
     currentSessionFine += 200.0;
-    }
     this.fineAmount = historicalFines + currentSessionFine;
+    }
+    
 
     // Set start time for receipt generation
     this.startTime = java.time.LocalDateTime.parse(entryTimeStr, formatter)

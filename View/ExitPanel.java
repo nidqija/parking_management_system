@@ -190,9 +190,9 @@ public class ExitPanel extends JPanel {
 
                   Receipts receiptModel = new Receipts();
                 receiptModel.insertReceipt(
-                currentCalculator.getTicketNumber(), // String
-                plate,                               // String
-                currentCalculator.getSpotId(),       // String
+                currentCalculator.getTicketNumber(), 
+                plate,                               
+                currentCalculator.getSpotId(),     
                 String.valueOf(currentCalculator.getStartTime()),    
                 String.valueOf(currentCalculator.getEndTime()),      
                 (int) currentCalculator.getLastHours(), 

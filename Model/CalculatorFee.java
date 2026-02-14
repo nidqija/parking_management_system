@@ -127,7 +127,7 @@ public String processExit(String plate) {
     // PHASE 1: Data Collection
     // We open the connection, get what we need, and close it IMMEDIATELY.
     try (Connection conn = new Data.Sqlite().connect()) {
-        String sql = "SELECT t.entry_time, s.hourly_rate, t.spot_id, t.ticket_number FROM Tickets t " +
+        String sql = "SELECT t.entry_time, s.hourly_rate, t.spot_id, t.ticket_number, t.reserved_violation FROM Tickets t " +
                      "JOIN Parking_Spots s ON t.spot_id = s.spot_id " +
                      "WHERE t.license_plate = ? AND t.exit_time IS NULL";
 
@@ -142,7 +142,8 @@ public String processExit(String plate) {
 
                     this.ticketNumber = ticketID;
                     this.spotId = spotId;
-                    this.reservedViolation = rs.getInt("is_reserved_violation") == 1;
+                    //1 means true, 0 means false in SQLite for boolean fields
+                    this.reservedViolation = rs.getInt("reserved_violation") == 1;
 
                     System.out.println("Found ticket number " + ticketID + " for plate " + plate);
                     
@@ -187,10 +188,9 @@ public String processExit(String plate) {
     
     if (this.reservedViolation) {
     fineController.checkAndRecordFine(plate, "RESERVED", 200.0, ticketID);
-    
-    // IMPORTANT: Add this to the session fine so it shows up on the receipt
     currentSessionFine += 200.0;
     }
+    this.fineAmount = historicalFines + currentSessionFine;
 
     // Set start time for receipt generation
     this.startTime = java.time.LocalDateTime.parse(entryTimeStr, formatter)

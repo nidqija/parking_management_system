@@ -10,6 +10,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import Model.Reservation;
 
 
 public class CalculatorFee implements FineInterface {
@@ -120,6 +121,10 @@ public class CalculatorFee implements FineInterface {
 }
 
 public String processExit(String plate) {
+
+    Reservation reservationModel = new Reservation();
+    reservationModel.checkReservationViolations();
+    
     String entryTimeStr = null;
     double hourlyRate = 0.0;
     String ticketID = null;
@@ -202,6 +207,8 @@ public String processExit(String plate) {
 }
 
  
+    
+
     public double getPreviousFines(String plate){
         double totalPreviousFines = 0.0;
         try (Connection conn = new Data.Sqlite().connect()) {

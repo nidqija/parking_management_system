@@ -52,7 +52,7 @@ public class ParkingSpotInterface {
     public float getHourlyRate() {
         return hourlyRate;
     }
-
+    
     // Overload for backward compatibility (no plate = no reserved access)
     public boolean isAvailableFor(VehicleType vType) {
         return isAvailableFor(vType, null);
@@ -61,7 +61,7 @@ public class ParkingSpotInterface {
     public boolean isAvailableFor(VehicleType vType, String plateNumber) {
         if (isOccupied)
             return false;
-
+        
         // 1. Reserved spots: only the assigned plate holder can enter
         if (this.type == SpotType.RESERVED) {
             return plateNumber != null
@@ -74,11 +74,12 @@ public class ParkingSpotInterface {
             case MOTORCYCLE:
                 return this.type == SpotType.COMPACT; // Compact only
             case CAR:
-                return this.type == SpotType.COMPACT || this.type == SpotType.REGULAR;
+                return this.type == SpotType.COMPACT || this.type == SpotType.REGULAR || this.type == SpotType.RESERVED; 
             case TRUCK: // or SUV
                 return this.type == SpotType.REGULAR; // Regular only
             case HANDICAPPED:
                 return true; // Any spot
+            
             default:
                 return false;
         }

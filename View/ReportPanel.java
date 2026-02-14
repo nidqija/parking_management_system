@@ -7,10 +7,12 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import Model.CalculatorFee;
 import Model.RevenueRecord;
 import Model.Vehicle;
 import Controller.Fines;
 import Controller.Floors;
+import Controller.ParkingComplex;
 
 public class ReportPanel extends JPanel {
 
@@ -40,8 +42,6 @@ public class ReportPanel extends JPanel {
                     v.getEntryTime() != null ? v.getEntryTime().toString() : "NULL",
                     v.getExitTime() != null ? v.getExitTime().toString() : "NULL",
                     v.getPaymentStatus() != null ? v.getPaymentStatus() : "NULL"
-                    // ternary operator
-                    // condition ? value_if_true : value_if_false
             });
             i++; // increment
         }
@@ -62,7 +62,6 @@ public class ReportPanel extends JPanel {
                     f.getOccupiedSpots(f.getFloorNumber()),
                     f.getAvailableSpots(f.getFloorNumber()),
                     String.format("%.1f%%", f.floorOccupancyRate(f.getFloorNumber()))
-
             });
         }
     }
@@ -81,30 +80,6 @@ public class ReportPanel extends JPanel {
                     fine.getVehiclePlate(),
                     fine.getAmount(),
                     fine.getStatus()
-            });
-        }
-    }
-
-    private void loadRevenueData() {
-        // Implement revenue data loading logic here
-        if (revenueTableModel == null)
-            return;
-        revenueTableModel.setRowCount(0);
-
-        List<Model.RevenueRecord> revenueRecords = RevenueRecord.getRevenueRecords();
-        for (Model.RevenueRecord record : revenueRecords) {
-            revenueTableModel.addRow(new Object[] {
-                    record.ticketNumber,
-                    record.licensePlate,
-                    record.spotType,
-                    record.floorName,
-                    record.entryTime,
-                    record.exitTime,
-                    record.durationHours,
-                    record.parkingFee,
-                    record.fineAmount,
-                    record.totalRevenue,
-                    record.paymentMethod
             });
         }
     }
@@ -135,11 +110,8 @@ public class ReportPanel extends JPanel {
         }
 
         vehiclesBtn.addActionListener(e -> cardLayout.show(contentPanel, "Vehicles"));
-
         revenueBtn.addActionListener(e -> cardLayout.show(contentPanel, "Revenue"));
-
         occupancyBtn.addActionListener(e -> cardLayout.show(contentPanel, "Occupancy"));
-
         finesBtn.addActionListener(e -> cardLayout.show(contentPanel, "Fines"));
 
         backBtn.addActionListener(e -> {
@@ -150,21 +122,25 @@ public class ReportPanel extends JPanel {
         panel.add(buttonPanel);
         add(panel, BorderLayout.NORTH);
 
-        // i want the pages to like switch based on what button is pressed to show each
-        // report basically
-
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
 
-        JPanel vehiclePanel = new JPanel(new BorderLayout());
-        JLabel vehicleLabel = new JLabel("List of Vehicles", SwingConstants.CENTER);
-        vehicleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        vehiclePanel.add(vehicleLabel, BorderLayout.NORTH);
-
-        String[] vehicleColumn = { "Vehicle", "Lisence Plate", "Vehicle Type", "Ticket ID", "Parking Spot",
-                "Entry Time", "Exit Time", "Payment Status" };
+        // Standard Table Formatting Variables
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        Font headerFont = new Font("Arial", Font.BOLD, 16);
+        Font tableFont = new Font("Arial", Font.PLAIN, 14);
+
+        // ==========================
+        // VEHICLE PANEL
+        // ==========================
+        JPanel vehiclePanel = new JPanel(new BorderLayout());
+        JLabel vehicleLabel = new JLabel("Vehicle List Report", SwingConstants.CENTER);
+        vehicleLabel.setFont(new Font("Arial", Font.PLAIN, 15));
+        vehiclePanel.add(vehicleLabel, BorderLayout.NORTH);
+
+        String[] vehicleColumn = { "Vehicle", "License Plate", "Vehicle Type", "Ticket ID", "Parking Spot",
+                "Entry Time", "Exit Time", "Payment Status" };
 
         tableModel = new DefaultTableModel(vehicleColumn, 0) {
             @Override
@@ -173,113 +149,142 @@ public class ReportPanel extends JPanel {
             }
         };
 
-        // Vehicle JTable panel
-
-        // JTable
         vehicleTable = new JTable(tableModel);
-        vehicleTable.setFillsViewportHeight(true);
         vehicleTable.setRowHeight(25);
-        vehicleTable.setFont(new Font("Arial", Font.PLAIN, 14));
-        vehicleTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 16));
-        vehicleTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // centers vehicle column
-        // Scroll pane
+        vehicleTable.setFont(tableFont);
+        vehicleTable.getTableHeader().setFont(headerFont);
+        vehicleTable.setDefaultRenderer(Object.class, centerRenderer);
+        
         JScrollPane scrollPane = new JScrollPane(vehicleTable);
         vehiclePanel.add(scrollPane, BorderLayout.CENTER);
-
         loadVehicleData();
-
-        JPanel revenuePanel = new JPanel(new BorderLayout());
-        JLabel revenueLabel = new JLabel("Revenue Report", SwingConstants.CENTER);
-        revenueLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        revenuePanel.add(revenueLabel, BorderLayout.CENTER);
         
+        // Add to card layout
+        contentPanel.add(vehiclePanel, "Vehicles");
 
-        // JTable
+        // ==========================
+        // REVENUE PANEL
+        // ==========================
+        JPanel revenuePanel = new JPanel(new BorderLayout());
 
-        String[] revenueColumn = { "Ticket Number", "License Plate", "Spot Type", "Floor Name", "Entry Time", "Exit Time", "Duration (Hours)", "Parking Fee", "Fine Amount", "Total Revenue", "Payment Method" };
-        revenueTableModel = new DefaultTableModel(revenueColumn, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // make table non-editable
-            }
-        };
+        JPanel revenueTopPanel = new JPanel();
+        revenueTopPanel.setLayout(new BoxLayout(revenueTopPanel, BoxLayout.Y_AXIS));
 
-        revenueTable = new JTable(revenueTableModel);
-        revenueTable.setFillsViewportHeight(true);
+        ParkingComplex parkingComplex = new ParkingComplex();
+        double totalRevenue = parkingComplex.getFormattedRevenue();
+        JLabel revenueValueLabel = new JLabel(String.format("Total Revenue: $%.2f", totalRevenue),
+                SwingConstants.CENTER);
+        revenueValueLabel.setFont(new Font("Arial", Font.PLAIN, 20));
+        revenueValueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        revenueTopPanel.add(revenueValueLabel);
+        revenueTopPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        JLabel revHeader = new JLabel("Revenue Breakdown by Paid Tickets", SwingConstants.CENTER);
+        revHeader.setFont(new Font("Arial", Font.PLAIN, 15));
+        revHeader.setAlignmentX(Component.CENTER_ALIGNMENT);
+        revenueTopPanel.add(revHeader);
+        revenuePanel.add(revenueTopPanel, BorderLayout.NORTH);
+
+        String[] revenueColumnNames = { "Plate Number", "Entry Time", "Exit Time", "Amount Paid", "Payment Method" };
+        revenueTableModel = new DefaultTableModel(revenueColumnNames, 0); 
+        
+        revenueTable = new JTable(revenueTableModel); 
+        // --- Standard Formatting Applied Here ---
         revenueTable.setRowHeight(25);
-        revenueTable.setFont(new Font("Arial", Font.PLAIN, 14));
-        revenueTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 16));
-        revenueTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // center Floor column
-
-        // Scroll pane
+        revenueTable.setFont(tableFont);
+        revenueTable.getTableHeader().setFont(headerFont);
+        revenueTable.setDefaultRenderer(Object.class, centerRenderer);
+        
         JScrollPane revenueScrollPane = new JScrollPane(revenueTable);
-        revenuePanel.add(revenueScrollPane, BorderLayout.CENTER); // add scroll pane to panel
+        revenueScrollPane.setPreferredSize(new Dimension(700, 300));
+        revenuePanel.add(revenueScrollPane, BorderLayout.CENTER);
 
-        // Load data
-        loadRevenueData(); // make sure this method fills revenueTableModel
+        CalculatorFee calculator = new CalculatorFee();
+        List<Object[]> paidTicketsData = calculator.getPaidTicket();
+        for (Object[] rowData : paidTicketsData) {
+            revenueTableModel.addRow(rowData);
+        }
 
+        // Add to card layout
+        contentPanel.add(revenuePanel, "Revenue");
+
+        // ==========================
+        // OCCUPANCY PANEL
+        // ==========================
         JPanel occupancyPanel = new JPanel(new BorderLayout());
-        JLabel occupancyLabel = new JLabel("Occupancy Report", SwingConstants.CENTER);
-        occupancyLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        occupancyPanel.add(occupancyLabel, BorderLayout.CENTER);
+        JLabel occupancyLabel = new JLabel("Occupancy Status Report", SwingConstants.CENTER);
+        occupancyLabel.setFont(new Font("Arial", Font.PLAIN, 15));
+        occupancyPanel.add(occupancyLabel, BorderLayout.NORTH);
 
         String[] occupancyColumn = { "Floor", "Floor Name", "Total Spot", "Occupied", "Available", "Occupancy Rate" };
         occupancyTableModel = new DefaultTableModel(occupancyColumn, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // make table non-editable
+                return false;
             }
         };
 
-        // JTable
         occupancyTable = new JTable(occupancyTableModel);
-        occupancyTable.setFillsViewportHeight(true);
         occupancyTable.setRowHeight(25);
-        occupancyTable.setFont(new Font("Arial", Font.PLAIN, 14));
-        occupancyTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 16));
-        occupancyTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // center Floor column
-
-        // Scroll pane
+        occupancyTable.setFont(tableFont);
+        occupancyTable.getTableHeader().setFont(headerFont);
+        occupancyTable.setDefaultRenderer(Object.class, centerRenderer);
+        
         JScrollPane occupancyScrollPane = new JScrollPane(occupancyTable);
-        occupancyPanel.add(occupancyScrollPane, BorderLayout.CENTER); // add scroll pane to panel
+        occupancyPanel.add(occupancyScrollPane, BorderLayout.CENTER);
+        loadOccupancyData();
 
-        // Load data
-        loadOccupancyData(); // make sure this method fills occupancyTableModel
-
-        JPanel finesPanel = new JPanel(new BorderLayout());
-        JLabel finesLabel = new JLabel("Fines Report", SwingConstants.CENTER);
-        finesLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        finesPanel.add(finesLabel, BorderLayout.CENTER);
-
-        contentPanel.add(vehiclePanel, "Vehicles");
-        contentPanel.add(revenuePanel, "Revenue");
+        // Add to card layout
         contentPanel.add(occupancyPanel, "Occupancy");
-        contentPanel.add(finesPanel, "Fines");
 
-        String[] finesColumn = { "Fine Type", "License Plate", "Amount", "Status" };
-        finesTableModel = new DefaultTableModel(finesColumn, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // make table non-editable
-            }
-        };
+        // ==========================
+        // FINES PANEL
+        // ==========================
+        JPanel finePanel = new JPanel(new BorderLayout());
 
-        // JTable
-        finesTable = new JTable(finesTableModel);
-        finesTable.setFillsViewportHeight(true);
+        JPanel fineTopPanel = new JPanel();
+        fineTopPanel.setLayout(new BoxLayout(fineTopPanel, BoxLayout.Y_AXIS));
+
+        JLabel infoLabel = new JLabel("List of Outstanding Fines:");
+        infoLabel.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 16));
+        infoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        fineTopPanel.add(infoLabel);
+
+        finePanel.add(fineTopPanel, BorderLayout.NORTH);
+
+        String[] fineColumnNames = { "License Plate", "Violation Type", "Amount", "Status" };
+        finesTableModel = new DefaultTableModel(fineColumnNames, 0); 
+        
+        finesTable = new JTable(finesTableModel); 
+        // --- Standard Formatting Applied Here ---
         finesTable.setRowHeight(25);
-        finesTable.setFont(new Font("Arial", Font.PLAIN, 14));
-        finesTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 16));
-        finesTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // center Floor column
+        finesTable.setFont(tableFont);
+        finesTable.getTableHeader().setFont(headerFont);
+        finesTable.setDefaultRenderer(Object.class, centerRenderer);
+        
+        JScrollPane fineScrollPane = new JScrollPane(finesTable);
+        fineScrollPane.setPreferredSize(new Dimension(700, 300));
+        finePanel.add(fineScrollPane, BorderLayout.CENTER); 
 
-        // Scroll pane
-        JScrollPane finesScrollPane = new JScrollPane(finesTable);
-        finesPanel.add(finesScrollPane, BorderLayout.CENTER); // add scroll pane to panel
+        Controller.Fines finesController = new Controller.Fines();
+        List<Fines> outstandingFines = finesController.getUnpaidFines();
 
-        // Load data
-        loadFinesData(); // make sure this method fills finesTableModel
+        if (outstandingFines != null) {
+            for (Fines fine : outstandingFines) {
+                Object[] rowData = {
+                        fine.getVehiclePlate(),
+                        fine.getFineID(),
+                        fine.getAmount(),
+                        fine.getStatus()
+                };
+                finesTableModel.addRow(rowData);
+            }
+        }
 
+        // Add to card layout
+        contentPanel.add(finePanel, "Fines");
+
+        // Add the main content panel to the frame
         add(contentPanel, BorderLayout.CENTER);
-
     }
 }

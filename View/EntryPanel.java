@@ -2,6 +2,7 @@ package View;
 
 import InterfaceLibrary.ParkingGroup;
 import InterfaceLibrary.ParkingSpotInterface;
+import Model.Reservation;
 import Model.Ticket;
 import Model.Vehicle;
 import Model.Vehicle.VehicleType;
@@ -18,6 +19,7 @@ public class EntryPanel extends JPanel {
     private JButton btnEnter;
     private JTextArea txtDisplay;
     private MainFrame mainFrame;
+
 
     private ParkingGroup parkingGroup;
 
@@ -130,9 +132,19 @@ public class EntryPanel extends JPanel {
         // 2. Mark Occupied (Memory Update)
         selectedSpot.occupy();
 
+        
+
+
+
         // 3. Generate Ticket
         Ticket ticket = new Ticket(vehicle, selectedSpot.getSpotID());
 
+        Reservation reservation = new Reservation();
+        reservation.completeReservation(plate, selectedSpot.getSpotID());
+
+
+
+        
         // 4. Display to User
         txtDisplay.setText("=== ENTRY CONFIRMED ===\n");
         txtDisplay.append(ticket.getTicketDetails());
@@ -143,5 +155,8 @@ public class EntryPanel extends JPanel {
         JOptionPane.showMessageDialog(this, "Ticket Generated & Saved to Database!");
 
     }
+
+
+    
 
 }

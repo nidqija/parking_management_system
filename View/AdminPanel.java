@@ -108,6 +108,7 @@ public class AdminPanel extends JPanel {
 
     
 
+       /*
        JButton viewOutstandingFines = new JButton("View Outstanding Fines");
        styleButton(viewOutstandingFines, btnSize);
        verticalMenu.add(viewOutstandingFines);
@@ -118,8 +119,10 @@ public class AdminPanel extends JPanel {
         viewOutstandingFines.addActionListener(e -> {
             mainFrame.showPage("OutstandingFinesPanel");
         });
+        */
 
 
+        /*
         JButton manageRevenue = new JButton("Manage Revenue");
         styleButton(manageRevenue, btnSize);
         verticalMenu.add(manageRevenue);
@@ -128,7 +131,8 @@ public class AdminPanel extends JPanel {
             mainFrame.showPage("ManageRevenue");
         });
 
-        verticalMenu.add(Box.createRigidArea(new Dimension(250, 20)));
+        verticalMenu.add(Box.createRigidArea(new Dimension(250, 20))); 
+        */
 
 
         JButton reportPanel = new JButton("View Report");

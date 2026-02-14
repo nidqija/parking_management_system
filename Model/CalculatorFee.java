@@ -3,6 +3,7 @@ package Model;
 
 import Controller.Fines;
 import Controller.ParkingFine;
+import InterfaceLibrary.FineInterface;
 import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -11,7 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 
-public class CalculatorFee {
+public class CalculatorFee implements FineInterface {
     
 
     public static final int OPTION_FIXED = 1;
@@ -72,8 +73,8 @@ public class CalculatorFee {
 
 
     
-
-   public static double calculateFine(int fineOption, double baseFee, int hourParked) {
+   @Override
+   public double calculateFine(int fineOption, double baseFee, int hourParked) {
   
 
     if (hourParked <= 24) return 0.0;
@@ -156,7 +157,7 @@ public String processExit(String plate) {
 
     // Perform calculations (No database connection is open here)
     this.lastHours = calculateHour(entryTimeStr);
-    this.baseFee = calculateBaseFee(hourlyRate, this.lastHours);
+    this.baseFee = calculateBaseFee(hourlyRate, this.lastHours );
     
     String schemeStr = ParkingFine.getInstance().getActiveFineScheme();
     int fineOption = mapSchemeToOption(schemeStr);

@@ -27,7 +27,7 @@ public class CalculatorFee implements FineInterface {
     private String ticketNumber;
     private String spotId;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    boolean reservedViolation = false;
+    boolean reservedViolation;
 
 
 
@@ -142,6 +142,7 @@ public String processExit(String plate) {
 
                     this.ticketNumber = ticketID;
                     this.spotId = spotId;
+                    this.reservedViolation = rs.getInt("is_reserved_violation") == 1;
 
                     System.out.println("Found ticket number " + ticketID + " for plate " + plate);
                     
@@ -184,14 +185,12 @@ public String processExit(String plate) {
     }
     
     
-    if (reservedViolation) {
-    fineController.checkAndRecordFine(
-        plate,
-        "RESERVED",
-        200.0,
-        ticketID
-    );
-}
+    if (this.reservedViolation) {
+    fineController.checkAndRecordFine(plate, "RESERVED", 200.0, ticketID);
+    
+    // IMPORTANT: Add this to the session fine so it shows up on the receipt
+    currentSessionFine += 200.0;
+    }
 
     // Set start time for receipt generation
     this.startTime = java.time.LocalDateTime.parse(entryTimeStr, formatter)

@@ -113,6 +113,8 @@ public class Ticket {
                 pstmt.setString(3, this.spotID);
                 pstmt.setString(4, this.entryTime.format(DB_FORMATTER)); 
                 pstmt.setString(5, "UNPAID");
+                //violation status (1 for true, 0 for false)
+                pstmt.setInt(6, reservedViolation ? 1 : 0);
                 pstmt.executeUpdate();
             }
 

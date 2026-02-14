@@ -48,13 +48,11 @@ public class Ticket {
             if (rs.next()) {
                 String reservedPlate = rs.getString("license_plate");
 
-                
                 if (reservedPlate == null ||
-                    !reservedPlate.equalsIgnoreCase(vehicle.getPlateNumber())) {
+                    !reservedPlate.equals(vehicle.getPlateNumber())) {
                     reservedViolation = true;
                 }
             }
-            
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -109,12 +107,14 @@ public class Ticket {
 
     private void saveToDB() {
         String checkReservationSQL = "SELECT reservation_id FROM Reservations " +
-                                      "WHERE license_plate = ? AND spot_id = ? AND status = 'ACTIVE' " +
-                                      "LIMIT 1";
-      String insertTicketSQL = "INSERT INTO Tickets(ticket_number, license_plate, spot_id, entry_time, payment_status, reservation_id, reserved_violation) " +"VALUES(?,?,?,?,?,?,?)";
-      String updateSpotSQL = "UPDATE Parking_Spots SET status = 'OCCUPIED', current_vehicle_plate = ? WHERE spot_id = ?";
-      String updateReservationSQL = "UPDATE Reservations SET status = 'completed' WHERE reservation_id = ?";
-
+                                  "WHERE license_plate = ? AND spot_id = ? " +
+                                  "AND LOWER(status) = 'active'" +
+                                  "AND datetime('now', 'localtime') BETWEEN datetime(start_time) AND datetime(end_time) " +
+                                  "ORDER BY reservation_id DESC LIMIT 1";
+   
+        String insertTicketSQL = "INSERT INTO Tickets(ticket_number, license_plate, spot_id, entry_time, payment_status, reservation_id, reserved_violation) VALUES(?,?,?,?,?,?,?)";
+        String updateSpotSQL = "UPDATE Parking_Spots SET status = 'OCCUPIED', current_vehicle_plate = ? WHERE spot_id = ?";
+        String updateReservationSQL = "UPDATE Reservations SET status = 'completed' WHERE reservation_id = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
             conn.setAutoCommit(false); // Transaction
 

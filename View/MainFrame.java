@@ -73,7 +73,7 @@ public class MainFrame extends JFrame implements Navigator {
         }
 
         if (pageName.equals("ReservePanel")) {
-            ReservePanel reservePanel = new ReservePanel(this);
+            ReservePanel reservePanel = new ReservePanel(this , pg);
             mainPanel.add(reservePanel, "ReservePanel");
         }
 

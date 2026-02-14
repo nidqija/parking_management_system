@@ -1,16 +1,27 @@
 package View;
-
+import Data.Sqlite;
 import InterfaceLibrary.ParkingGroup;
 import InterfaceLibrary.ParkingSpotInterface;
-import Model.Reservation;
-import Model.Ticket;
-import Model.Vehicle;
 import Model.Vehicle.VehicleType;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.List;
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 
-public class EntryPanel extends JPanel {
+
+
+public class ReservePanel extends JPanel {
 
     private JTextField txtPlate;
     private JComboBox<VehicleType> cmbType;
@@ -18,18 +29,29 @@ public class EntryPanel extends JPanel {
     private JButton btnCheckSpots;
     private JButton btnEnter;
     private JTextArea txtDisplay;
-    private MainFrame mainFrame;
-
-
     private ParkingGroup parkingGroup;
+    private List<ParkingSpotInterface> currentAvailableSpots;
 
-    public EntryPanel(MainFrame mainFrame, ParkingGroup pg) {
+
+    public ReservePanel(MainFrame mainFrame, ParkingGroup pg) {
+       
+
+    
         this.parkingGroup = pg;
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
+
+       
+
+
         // --- Top: Input Form ---
         JPanel inputPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+
+        JLabel title = new JLabel("Reserve a Parking Spot", JLabel.CENTER);
+        title.setFont(new Font("Arial", Font.BOLD, 24));
+        add(title, BorderLayout.NORTH);
+
 
         inputPanel.add(new JLabel("License Plate:"));
         txtPlate = new JTextField();
@@ -89,7 +111,7 @@ public class EntryPanel extends JPanel {
             }
         });
 
-        // 2. Confirm Entry
+      
         btnEnter.addActionListener(e -> processEntry());
 
         JButton backButton = new JButton("Back to Main Menu");
@@ -126,37 +148,46 @@ public class EntryPanel extends JPanel {
             return;
         }
 
-        // 1. Create Vehicle
-        Vehicle vehicle = new Vehicle(plate, type);
+       
 
-        // 2. Mark Occupied (Memory Update)
-        selectedSpot.occupy();
+    
+        saveReservationtoDb(plate, type, selectedSpot.getSpotID());
 
-        
-
-
-
-        // 3. Generate Ticket
-        Ticket ticket = new Ticket(vehicle, selectedSpot.getSpotID());
-
-        Reservation reservation = new Reservation();
-        reservation.completeReservation(plate, selectedSpot.getSpotID());
-
-
-
-        
+       
         // 4. Display to User
         txtDisplay.setText("=== ENTRY CONFIRMED ===\n");
-        txtDisplay.append(ticket.getTicketDetails());
-
+        txtDisplay.append("License Plate: " + plate + "\n");
+        txtDisplay.append("Vehicle Type: " + type + "\n");
+        txtDisplay.append("Spot ID: " + selectedSpot.getSpotID() + "\n");   
         // 5. Cleanup
         txtPlate.setText("");
         resetSelection();
-        JOptionPane.showMessageDialog(this, "Ticket Generated & Saved to Database!");
+        JOptionPane.showMessageDialog(this, "Reservation Generated & Saved to Database!");
 
     }
 
 
+
+
+
+
+    private void saveReservationtoDb(String plate, VehicleType type, String spotId) {
+       Sqlite db = new Sqlite();
+       try (Connection conn = db.connect()) {
+           String sql = "INSERT INTO Reservations (license_plate, spot_id, start_time, end_time, status) " +
+                 "VALUES (?, ?, datetime('now', 'localtime'), datetime('now', 'localtime', '+2 hours'), 'ACTIVE')";
+           try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+               pstmt.setString(1, plate);
+               pstmt.setString(2, spotId);
+
+               pstmt.executeUpdate();
+               System.out.println("Reservation saved for " + plate + " at spot " + spotId);
+           }
+           
+       } catch (Exception e) {
+           e.printStackTrace();
+    }
+}
+}
     
 
-}

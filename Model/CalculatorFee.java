@@ -1,239 +1,460 @@
 package Model;
 
-import InterfaceLibrary.ParkingFines;
-import java.io.*;
+import Controller.Fines;
+import Controller.ParkingFine;
+import InterfaceLibrary.FineInterface;
+import java.sql.Connection;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * CalculatorFee: Computes parking fees and fines, and updates ticket records.
- *
- * Responsibilities:
- * - Calculate parking duration (ceiling to nearest hour)
- * - Lookup spot hourly rates from Data/parking_spots.csv
- * - Calculate fee and fines
- * - Find active ticket for a plate and settle it (write exit time & fee to CSV)
- */
-public class CalculatorFee implements ParkingFines {
 
-    private static final String PARKING_DATA_FILE = "Data/parking_spots.csv";
-    private static final String TICKET_FILE = "Data/tickets.csv";
+public class CalculatorFee implements FineInterface {
+    
 
-    // Rate table (RM/hour)
-    private static final double RATE_COMPACT = 2.0;
-    private static final double RATE_REGULAR = 5.0;
-    private static final double RATE_HANDICAPPED = 2.0;
-    private static final double RATE_RESERVED = 10.0;
+    public static final int OPTION_FIXED = 1;
+    public static final int OPTION_PROGRESSIVE = 2;
+    public static final int OPTION_HOURLY = 3;
+    int option = OPTION_PROGRESSIVE;
+    private double baseFee;
+    private double fineAmount;
+    private long lastHours;
+    private long startTime;
+    private long endTime;
+    private String ticketNumber;
+    private String spotId;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    /**
-     * Represents an active ticket read from the tickets CSV.
-     */
-    public static class ActiveTicket {
-        public final String ticketID;
-        public final String plate;
-        public final String spotID;
-        public final LocalDateTime entryTime;
 
-        public ActiveTicket(String ticketID, String plate, String spotID, LocalDateTime entryTime) {
-            this.ticketID = ticketID;
-            this.plate = plate;
-            this.spotID = spotID;
-            this.entryTime = entryTime;
+
+
+    public static double calculateBaseFee(double hourlyRate , long hours){
+        return hourlyRate * hours;
+    }
+
+    public double getBaseFee() {
+        return baseFee;
+    }
+
+    public double getFineAmount() {
+        return fineAmount;
+    }
+
+    public long getLastHours() {
+        return lastHours;
+    }
+
+    
+
+    public double getTotalAmount(){
+        return baseFee + fineAmount;
+    }
+
+    public long getStartTime(){
+        return startTime;
+    }
+
+    public String getTicketNumber(){
+        return this.ticketNumber;
+    }
+
+    public String getSpotId(){
+        return this.spotId;
+    }
+
+    public long getEndTime(){
+        return this.endTime;
+    }
+
+    
+
+
+    
+   @Override
+   public double calculateFine(int fineOption, double baseFee, int hourParked) {
+  
+
+    if (hourParked <= 24) return 0.0;
+
+    double fineAmount = 0.0;
+    ParkingFine fineController = ParkingFine.getInstance();
+
+    double dbAmount = 0.0;
+    switch (fineOption) {
+        case OPTION_FIXED:
+            dbAmount = fineController.getFineAmount("FIXED");
+            fineAmount = dbAmount;
+            break;
+        case OPTION_PROGRESSIVE:
+            dbAmount = fineController.getFineAmount("PROGRESSIVE");
+            int totalDays = (hourParked + 23) / 24;
+
+            if (totalDays <= 1) {
+            fineAmount = dbAmount; // RM 50 for first day
+          } else if (totalDays == 2) {
+               fineAmount = dbAmount + 100.0; // Total: 150
+            } else if (totalDays == 3) {
+                fineAmount = dbAmount + 100.0 + 150.0; // Total: 300
+            } else if (totalDays >= 4) {
+                fineAmount = dbAmount + 100.0 + 150.0 + 200.0 ; 
+            }
+            break;
+        case OPTION_HOURLY:
+            dbAmount = fineController.getFineAmount("HOURLY");
+            int hoursOverstay = hourParked - 24;
+            fineAmount = dbAmount * hoursOverstay;
+            break;
+        default:
+            fineAmount = 0.0; 
+    }
+
+
+    return fineAmount;
+}
+
+public String processExit(String plate) {
+    String entryTimeStr = null;
+    double hourlyRate = 0.0;
+    String ticketID = null;
+
+    // PHASE 1: Data Collection
+    // We open the connection, get what we need, and close it IMMEDIATELY.
+    try (Connection conn = new Data.Sqlite().connect()) {
+        String sql = "SELECT t.entry_time, s.hourly_rate, t.spot_id, t.ticket_number FROM Tickets t " +
+                     "JOIN Parking_Spots s ON t.spot_id = s.spot_id " +
+                     "WHERE t.license_plate = ? AND t.exit_time IS NULL";
+
+        try (java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, plate);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    entryTimeStr = rs.getString("entry_time");
+                    hourlyRate = rs.getDouble("hourly_rate");
+                    ticketID = rs.getString("ticket_number");
+                    spotId = rs.getString("spot_id");
+
+                    this.ticketNumber = ticketID;
+                    this.spotId = spotId;
+
+                    System.out.println("Found ticket number " + ticketID + " for plate " + plate);
+                    
+                }
+            }
         }
+    } catch (Exception e) {
+        e.printStackTrace();
+        return "Error reading ticket: " + e.getMessage();
     }
 
-    /**
-     * Calculate parking duration in hours, rounding up to the next whole hour.
-     */
-    public static long calculateHours(LocalDateTime entryTime, LocalDateTime exitTime) {
-        long seconds = ChronoUnit.SECONDS.between(entryTime, exitTime);
-        if (seconds <= 0) return 0;
-        double hours = seconds / 3600.0;
-        return (long) Math.ceil(hours);
+    // PHASE 2: Logic & Calculations
+    // If no ticket was found, we exit early before touching the Fines logic.
+    if (ticketID == null) {
+        return "No active ticket found for plate: " + plate;
     }
 
-    /**
-     * Returns hourly rate (RM) for a given spot id by reading the parking_spots.csv.
-     */
-    public static double getHourlyRate(String spotID) {
-        File file = new File(PARKING_DATA_FILE);
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String line;
-            // skip header
-            br.readLine();
-            while ((line = br.readLine()) != null) {
-                String[] data = line.split(",");
-                if (data.length >= 3 && data[0].equals(spotID)) {
-                    String type = data[2].trim();
-                    switch (type) {
-                        case "Compact": return RATE_COMPACT;
-                        case "Regular": return RATE_REGULAR;
-                        case "Handicapped": return RATE_HANDICAPPED;
-                        case "Reserved": return RATE_RESERVED;
-                        default: return RATE_REGULAR; // fallback
+    // Perform calculations (No database connection is open here)
+    this.lastHours = calculateHour(entryTimeStr);
+    this.baseFee = calculateBaseFee(hourlyRate, this.lastHours );
+    
+    String schemeStr = ParkingFine.getInstance().getActiveFineScheme();
+    int fineOption = mapSchemeToOption(schemeStr);
+    
+    // Calculate the fine for THIS specific session
+    double currentSessionFine = calculateFine(fineOption, this.baseFee, (int)this.lastHours);
+
+    // Get historical unpaid fines from the ledger
+    Fines fineController = new Fines();
+    double historicalFines = fineController.getUnpaidLedgerTotal(plate);
+    
+    // Total fine displayed to user = Current Stay Fine + Old Unpaid Fines
+    this.fineAmount = historicalFines + currentSessionFine;
+
+    // PHASE 3: Record Fine
+    // Only record to the ledger if the current session actually generated a fine.
+    if (currentSessionFine > 0) {
+        // This method opens its own fresh connection to WRITE.
+        fineController.checkAndRecordFine(plate, "OVERSTAY", currentSessionFine, ticketID);
+    }
+
+    // Set start time for receipt generation
+    this.startTime = java.time.LocalDateTime.parse(entryTimeStr, formatter)
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toEpochSecond();
+
+    return String.format("... Base Fee: RM %.2f, \n Current Fine: RM %.2f, \n Past Unpaid: RM %.2f ...", 
+                         this.baseFee, currentSessionFine, historicalFines);
+}
+
+ 
+    public double getPreviousFines(String plate){
+        double totalPreviousFines = 0.0;
+        try (Connection conn = new Data.Sqlite().connect()) {
+
+             String sql = "SELECT SUM(amount) AS total_fines " +
+             "FROM Fines_Ledger " +
+             "WHERE license_plate = ? AND status = 'UNPAID' ";
+
+            var pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, plate);
+            var rs = pstmt.executeQuery();
+            
+            if (rs.next()){
+              totalPreviousFines = rs.getDouble("total_fines");
+            }
+              
+            } 
+        catch (Exception e) {
+            e.printStackTrace();
+    }
+    return totalPreviousFines;
+}
+
+
+public double getRevenue(String dateFrom , String dateTo){
+    double totalRevenue = 0.0;
+    try (Connection conn = new Data.Sqlite().connect()) {
+
+         String sql = "SELECT SUM(parking_fee) AS total_revenue " +
+         "FROM Tickets " +
+         "WHERE payment_status = 'PAID' AND exit_time BETWEEN ? AND ?";
+
+        var pstmt = conn.prepareStatement(sql);
+        pstmt.setString(1, dateFrom + " 00:00:00");
+        pstmt.setString(2, dateTo + " 23:59:59");
+        var rs = pstmt.executeQuery();
+        
+        if (rs.next()){
+          totalRevenue = rs.getDouble("total_revenue");
+        }
+          
+        } 
+    catch (Exception e) {
+        e.printStackTrace();
+}
+    return totalRevenue;
+}
+
+
+
+
+
+    private long calculateHour(String entryTimeStr) {
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        java.time.LocalDateTime entryTime = java.time.LocalDateTime.parse(entryTimeStr, formatter);  
+        java.time.LocalDateTime currentTime = java.time.LocalDateTime.now();
+        java.time.Duration duration = java.time.Duration.between(entryTime, currentTime);
+        long minutes = duration.toMinutes();
+        long hours = (long) Math.ceil(minutes / 60.0);
+
+        System.out.println("Calculated parked hours: " + hours);
+        System.out.println("Entry Time: " + entryTimeStr + ", Current Time: " + currentTime.format(formatter));
+        
+    
+        return (hours <= 0) ? 1 : hours; // Ensure at least 1 hour is charged
+    }
+
+
+
+    public List<Object[]> getPaidTicket(){
+        List<Object[]> paidTickets = new java.util.ArrayList<>();
+        try (Connection conn = new Data.Sqlite().connect()) {
+
+             String sql = "SELECT license_plate, entry_time, exit_time, parking_fee, payment_method " +
+             "FROM Tickets " +
+             "WHERE payment_status = 'PAID'";
+
+            var pstmt = conn.prepareStatement(sql);
+            var rs = pstmt.executeQuery();
+            
+            while (rs.next()){
+              Object[] row = new Object[5];
+              row[0] = rs.getString("license_plate");
+              row[1] = rs.getString("entry_time");
+              row[2] = rs.getString("exit_time");
+              row[3] = rs.getDouble("parking_fee");
+              row[4] = rs.getString("payment_method");
+
+              for (int i = 0; i < row.length; i++) {
+                  if (row[i] == null) {
+                      row[i] = "N/A";
+                  }
+              }
+              paidTickets.add(row);
+            }
+              
+            } 
+        catch (Exception e) {
+            e.printStackTrace();
+    }
+    return paidTickets;
+}
+
+
+  
+
+
+   private int mapSchemeToOption(String scheme) {
+    if (scheme == null) return -1;
+    String upperScheme = scheme.toUpperCase(); // Convert to uppercase to ignore case
+    if (upperScheme.contains("OPTION A")) return OPTION_FIXED;
+    if (upperScheme.contains("OPTION B")) return OPTION_PROGRESSIVE;
+    if (upperScheme.contains("OPTION C")) return OPTION_HOURLY;
+    return -1;
+}
+
+
+public boolean processFinalPayment(String plate, double amountPaid, long hours , String paymentMethod){
+    try (Connection conn = new Data.Sqlite().connect()) {
+       conn.setAutoCommit(false); // Enable transaction for data safety
+       String sql = "UPDATE Tickets SET payment_status = 'PAID', exit_time = datetime('now'), " +
+                     "parking_fee = ?, duration_hours = ?, payment_method = ? " +
+                     "WHERE license_plate = ? AND exit_time IS NULL";
+
+
+        var pstmt = conn.prepareStatement(sql);
+
+
+        pstmt.setDouble(1, this.baseFee); // matches first ?
+        pstmt.setLong(2, hours);       // matches second ?
+        pstmt.setString(3, paymentMethod);
+        pstmt.setString(4, plate);
+
+        int rowsUpdated = pstmt.executeUpdate();
+        
+        if (rowsUpdated > 0){
+
+            double balanceForFines = amountPaid - this.baseFee;
+            if (balanceForFines > 0) {
+                String selectFineLedger = "SELECT fine_id , amount AS total_fines FROM Fines_Ledger WHERE license_plate = ? AND status = 'UNPAID' ORDER BY created_at ASC";
+                var pstmtFine = conn.prepareStatement(selectFineLedger);
+                pstmtFine.setString(1, plate);
+                var rs = pstmtFine.executeQuery();
+
+                String fineUpdate = "UPDATE Fines_Ledger SET status = 'PAID' WHERE fine_id = ?";
+                var pstmtUpdateFine = conn.prepareStatement(fineUpdate);
+
+
+                while (rs.next() && balanceForFines > 0) {
+                    int fineID = rs.getInt("fine_id");
+                    double fineAmount = rs.getDouble("total_fines");
+
+                    if (balanceForFines >= fineAmount) {
+                        pstmtUpdateFine.setInt(1, fineID);
+                        pstmtUpdateFine.executeUpdate();
+                        balanceForFines -= fineAmount;
+                    } else {
+                        break; 
                     }
+                    
                 }
             }
-        } catch (IOException e) {
-            System.err.println("Error reading parking data: " + e.getMessage());
+            
+
+
+            String updateSpotSQL = "UPDATE Parking_Spots SET status = 'AVAILABLE', current_vehicle_plate = NULL " +
+                                 "WHERE current_vehicle_plate = ?";
+            
+            var pstmt2 = conn.prepareStatement(updateSpotSQL);
+            pstmt2.setString(1, plate);
+            pstmt2.executeUpdate();
+
+
+            conn.commit();
+
+            return  true;
+
         }
-        return RATE_REGULAR; // default if not found
+          
+        } 
+    catch (Exception e) {
+        e.printStackTrace();
+
+    }
+    return false;
+
+}
+
+
+public String getFinalReceipt(String plate , String paymentMethod , double totalPaid , double fineAmount , double baseFee , long hours , long startTime){ {
+    ZoneOffset currentOffset = ZoneId.systemDefault().getRules().getOffset(LocalDateTime.now());
+    LocalDateTime entryDateTime = LocalDateTime.ofEpochSecond(startTime, 0, currentOffset);
+    double totalOwed = baseFee + fineAmount;
+    double change = totalPaid - totalOwed;
+
+    double balanceDue = (change < 0) ? Math.abs(change) : 0.00;
+    double changeGiven = (change > 0) ? change : 0.00;
+
+
+    if (balanceDue > 0) {
+        System.out.println("Payment incomplete. Balance due: RM " + String.format("%.2f", balanceDue));
+   
+    try (Connection conn = new Data.Sqlite().connect()) {
+        
+   
+    String ledgerSql = "UPDATE Fines_Ledger SET status = 'UNPAID', amount = ? " +
+                       "WHERE license_plate = ? AND ticket_ref = ? AND status = 'UNPAID'";
+    
+    var pstmtLedger = conn.prepareStatement(ledgerSql);
+    pstmtLedger.setDouble(1, balanceDue);   // The remaining debt
+    pstmtLedger.setString(2, plate);        // The car plate
+    pstmtLedger.setString(3, this.ticketNumber); // The specific ticket reference
+    
+    pstmtLedger.executeUpdate();
+    
+ 
+}
+    catch (Exception e) {
+        e.printStackTrace();
+        return "Error processing record: " + e.getMessage();
     }
 
-    /**
-     * Calculate fee (RM) for a ticket: hours * rate. exitTime may be null to use now.
-     */
-    public static double calculateFee(LocalDateTime entryTime, String spotID, LocalDateTime exitTime) {
-        if (exitTime == null) exitTime = LocalDateTime.now();
-        long hours = calculateHours(entryTime, exitTime);
-        double rate = getHourlyRate(spotID);
-        return hours * rate;
+    } else {
+        System.out.println("Payment complete. No balance due.");
     }
+    
 
-    /**
-     * Finds the active ticket (no exit_time) for the given plate in the tickets CSV.
-     * Returns null if none found.
-     */
-    public static ActiveTicket findActiveTicket(String plate) {
-        File file = new File(TICKET_FILE);
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String header = br.readLine(); // header
-            String line;
-            ActiveTicket last = null;
-            while ((line = br.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
-                String[] data = line.split(",");
-                if (data.length < 4) continue; // malformed
-                String ticketID = data[0];
-                String license = data[1];
-                String spotID = data[2];
-                String entryTimeStr = data[3];
 
-                boolean hasExit = (data.length >= 5 && data[4] != null && !data[4].trim().isEmpty());
+     
+  return "==========================================\n" +
+           "           PARKING OFFICIAL RECEIPT       \n" +
+           "==========================================\n" +
+           "Plate Number  : " + plate + "\n" +
+           "Status        : PAID\n" +
+           "Method        : " + paymentMethod + "\n" +
+           "------------------------------------------\n" +
+           "Entry Time    : " + entryDateTime.format(formatter) + "\n" +
+           "Exit Time     : " + LocalDateTime.now().format(formatter) + "\n" +
+           "Duration      : " + hours + " Hours\n" +
+           "------------------------------------------\n" +
+           "Base Fee      : RM " + baseFee + "\n" +
+           "Fines Due     : RM " + fineAmount + "\n" +
+           "------------------------------------------\n" +
+           "TOTAL PAID    : RM " + totalPaid + "\n" +
+           "Balance       : RM 0.00\n" +
+           "==========================================\n" +
+           "      THANK YOU! HAVE A SAFE TRIP         \n" +
+           "BALANCE DUE   : RM " + String.format("%.2f", balanceDue) + "\n" + 
+           "CHANGE GIVEN  : RM " + String.format("%.2f", changeGiven) + "\n" +
+           "==========================================";
 
-                if (license.equals(plate) && !hasExit) {
-                    LocalDateTime entryTime = LocalDateTime.parse(entryTimeStr);
-                    last = new ActiveTicket(ticketID, license, spotID, entryTime);
-                }
-            }
-            return last;
-        } catch (FileNotFoundException e) {
-            System.err.println("Tickets file not found: " + e.getMessage());
-        } catch (IOException e) {
-            System.err.println("Error reading tickets: " + e.getMessage());
-        }
-        return null;
-    }
+}
 
-    /**
-     * Settle the active ticket for the plate: set exit time to exitTime (or now) and fee, and mark spot available.
-     * Returns true if an active ticket was found and updated.
-     */
-    public static boolean settleTicket(String plate, LocalDateTime exitTime, double fee) {
-        if (exitTime == null) exitTime = LocalDateTime.now();
-        File file = new File(TICKET_FILE);
-        List<String> lines = new ArrayList<>();
-        boolean updated = false;
 
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String header = br.readLine();
-            if (header == null) return false;
-            lines.add(header);
-            String line;
 
-            while ((line = br.readLine()) != null) {
-                if (line.trim().isEmpty()) {
-                    lines.add(line);
-                    continue;
-                }
-                String[] data = line.split(",");
-                if (data.length < 4) {
-                    lines.add(line);
-                    continue;
-                }
-                String license = data[1];
-                boolean hasExit = (data.length >= 5 && data[4] != null && !data[4].trim().isEmpty());
 
-                if (!updated && license.equals(plate) && !hasExit) {
-                    // Ensure we have 6 fields: ticket_id,plate,spot_id,entry_time,exit_time,fee
-                    String ticketID = data[0];
-                    String spotID = data[2];
-                    String entryTimeStr = data[3];
-                    String exitTimeStr = exitTime.toString();
-                    String feeStr = String.format("%.2f", fee);
 
-                    String updatedLine = String.join(",", ticketID, license, spotID, entryTimeStr, exitTimeStr, feeStr);
-                    lines.add(updatedLine);
-                    updated = true;
 
-                    // mark spot available
-                    WritetoCSV.WritetoCSV.updateSpotStatus(spotID, "Available");
-                } else {
-                    lines.add(line);
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading tickets file: " + e.getMessage());
-            return false;
-        }
 
-        if (updated) {
-            // write back
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, false))) {
-                for (String out : lines) {
-                    bw.write(out);
-                    bw.newLine();
-                }
-                return true;
-            } catch (IOException e) {
-                System.err.println("Error writing tickets file: " + e.getMessage());
-                return false;
-            }
-        }
-        return false;
-    }
 
-    /**
-     * Calculate fine based on violationType. Supports the scheme codes:
-     *  - "FIXED" -> RM 50
-     *  - "PROGRESSIVE:n" -> RM 50 * n  (capped at RM 200)
-     *  - "HOURLY:h" -> RM 20 * h
-     */
-    @Override
-    public double calculateFine(String violationType) {
-        if (violationType == null) return 0.0;
-        violationType = violationType.trim().toUpperCase();
-        if (violationType.equals("FIXED")) {
-            return 50.0;
-        }
-        if (violationType.startsWith("PROGRESSIVE:")) {
-            try {
-                String[] parts = violationType.split(":");
-                int n = Integer.parseInt(parts[1]);
-                double fine = 50.0 * n;
-                return Math.min(fine, 200.0);
-            } catch (Exception e) {
-                return 50.0;
-            }
-        }
-        if (violationType.startsWith("HOURLY:")) {
-            try {
-                String[] parts = violationType.split(":");
-                int h = Integer.parseInt(parts[1]);
-                return 20.0 * h;
-            } catch (Exception e) {
-                return 0.0;
-            }
-        }
-        // Default for known violations like OVERSTAY
-        if (violationType.equals("OVERSTAY") || violationType.equals("WRONG SPOT")) {
-            return 50.0;
-        }
-        return 0.0;
-    }
 
+}
+
+public String displayFinalReceipt(String receiptContent) {
+    return "********** FINAL RECEIPT **********\n" +
+           receiptContent +
+           "\n***********************************";
+}
 }
 

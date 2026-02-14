@@ -22,4 +22,17 @@ public class Reservation {
             e.printStackTrace();
         }
     }
+
+
+    public void getReservedVehicle(String spot_ID) {
+        String sql = "SELECT license_plate, spot_id FROM Reservations WHERE status = 'active' AND spot_id = ?";
+        Sqlite db = new Sqlite();
+        try (Connection conn = db.connect()) {
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, spot_ID);
+            pstmt.executeQuery();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

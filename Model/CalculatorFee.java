@@ -27,6 +27,7 @@ public class CalculatorFee implements FineInterface {
     private String ticketNumber;
     private String spotId;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    boolean reserve_fine = false;
 
 
 
@@ -68,6 +69,12 @@ public class CalculatorFee implements FineInterface {
     public long getEndTime(){
         return this.endTime;
     }
+    
+    public void detectReservedViolation(boolean isReserved, boolean authorized) {
+    if (isReserved && !authorized) {
+        reserve_fine = true;
+    }
+}
 
     
 
@@ -177,6 +184,12 @@ public String processExit(String plate) {
     if (currentSessionFine > 0) {
         // This method opens its own fresh connection to WRITE.
         fineController.checkAndRecordFine(plate, "OVERSTAY", currentSessionFine, ticketID);
+    }
+    
+    
+    if (reserve_fine) {
+    double reservedFineAmount = 200.0; // or from DB
+    fineController.checkAndRecordFine(plate, "RESERVED", reservedFineAmount, ticketID);
     }
 
     // Set start time for receipt generation

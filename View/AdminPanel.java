@@ -90,8 +90,23 @@ public class AdminPanel extends JPanel {
        manageFines.addActionListener(e -> {
            mainFrame.showPage("ManageFines");
        });
+
+
+       JButton manageParking = new JButton("Manage Parking Complex");
+       styleButton(manageParking, btnSize);
+       verticalMenu.add(manageParking);
+
+       manageParking.addActionListener(e -> {
+           mainFrame.showPage("ManageParkingComplex");
+       });
+
+       
+
        
        verticalMenu.add(Box.createRigidArea(new Dimension(250, 20)));
+
+
+       
 
 
        JButton viewTickets = new JButton("View Issued Tickets");

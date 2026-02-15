@@ -146,8 +146,8 @@ public class ExitPanel extends JPanel {
 
             String plate = plateSearchField.getText().trim();
             String paymentMethod = (String) paymentMethodComboBox.getSelectedItem();
-            double unpaidHistorical = currentCalculator.getPreviousFines(plate);
-            double grandTotal = unpaidHistorical + currentCalculator.getTotalAmount();
+            // Note: currentCalculator.getTotalAmount() already includes historical fines
+            // No need to add unpaidHistorical again to avoid double counting
             String custPaymentMethod = (String) paymentMethodComboBox.getSelectedItem();
 
             double amountEntered;

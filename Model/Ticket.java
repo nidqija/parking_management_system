@@ -106,21 +106,45 @@ public class Ticket {
     public String getEntryTimeStr() { return entryTime.toString(); }
 
     private void saveToDB() {
-        String insertTicketSQL = "INSERT INTO Tickets(ticket_number, license_plate, spot_id, entry_time, payment_status, reserved_violation) VALUES(?,?,?,?,?,?)";
+        String checkReservationSQL = "SELECT reservation_id FROM Reservations " +
+                                  "WHERE license_plate = ? AND spot_id = ? " +
+                                  "AND LOWER(status) = 'active'" +
+                                  "AND datetime('now', 'localtime') BETWEEN datetime(start_time) AND datetime(end_time) " +
+                                  "ORDER BY reservation_id DESC LIMIT 1";
+   
+        String insertTicketSQL = "INSERT INTO Tickets(ticket_number, license_plate, spot_id, entry_time, payment_status, reservation_id, reserved_violation) VALUES(?,?,?,?,?,?,?)";
         String updateSpotSQL = "UPDATE Parking_Spots SET status = 'OCCUPIED', current_vehicle_plate = ? WHERE spot_id = ?";
-
+        String updateReservationSQL = "UPDATE Reservations SET status = 'completed' WHERE reservation_id = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
             conn.setAutoCommit(false); // Transaction
 
-            // 1. Insert Ticket
+            // 0. Check for active reservation
+            Integer reservationId = null;
+            try (PreparedStatement pstmt = conn.prepareStatement(checkReservationSQL)) {
+                pstmt.setString(1, this.vehicle.getPlateNumber());
+                pstmt.setString(2, this.spotID);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        reservationId = rs.getInt("reservation_id");
+                        System.out.println("Found active reservation ID: " + reservationId);
+                    }
+                }
+            }
+
+            // 1. Insert Ticket with reservation_id if found
             try (PreparedStatement pstmt = conn.prepareStatement(insertTicketSQL)) {
                 pstmt.setString(1, this.ticketID);
                 pstmt.setString(2, this.vehicle.getPlateNumber());
                 pstmt.setString(3, this.spotID);
                 pstmt.setString(4, this.entryTime.format(DB_FORMATTER)); 
                 pstmt.setString(5, "UNPAID");
+                if (reservationId != null) {
+                    pstmt.setInt(6, reservationId);
+                } else {
+                    pstmt.setNull(6, java.sql.Types.INTEGER);
+                }
                 //violation status (1 for true, 0 for false)
-                pstmt.setInt(6, reservedViolation ? 1 : 0);
+                pstmt.setInt(7, reservedViolation ? 1 : 0);
                 pstmt.executeUpdate();
             }
 
@@ -129,6 +153,15 @@ public class Ticket {
                 pstmt.setString(1, this.vehicle.getPlateNumber());
                 pstmt.setString(2, this.spotID);
                 pstmt.executeUpdate();
+            }
+
+            // 3. Mark reservation as completed if it exists
+            if (reservationId != null) {
+                try (PreparedStatement pstmt = conn.prepareStatement(updateReservationSQL)) {
+                    pstmt.setInt(1, reservationId);
+                    pstmt.executeUpdate();
+                    System.out.println("Marked reservation " + reservationId + " as COMPLETED");
+                }
             }
 
             conn.commit();

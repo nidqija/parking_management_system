@@ -123,15 +123,14 @@ public class ParkingSpotInterface {
 
     public String getDetails() {
 
-        int testHours = 2;
-        float totalRevenue = CalculateRevenue(testHours);
+        
 
         String details = "Floor ID: " + floorId + "\n" +
                 "Status: " + status + "\n" +
                 "Parking Type: " + type + "\n" +
                 "Reserved For Plate: " + (reservedForPlate != null ? reservedForPlate : "N/A") + "\n" +
                 "Current Vehicle Plate: " + (currentVehiclePlate != null ? currentVehiclePlate : "N/A") + "\n" +
-                "Hourly Rate: RM " + totalRevenue;
+                "Hourly Rate: RM " + hourlyRate;
         return details;
     }
 

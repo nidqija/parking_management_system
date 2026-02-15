@@ -1,12 +1,10 @@
 package View;
 
-import Controller.ParkingComplex;
-import Controller.Floors; 
+import Controller.Floors;
 import java.awt.*;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.util.List;
-import java.util.ArrayList;
 
 public class ManageParkingComplex extends JPanel {
 
@@ -22,12 +20,8 @@ public class ManageParkingComplex extends JPanel {
         JLabel label = new JLabel("Parking Complex Overview", SwingConstants.CENTER);
         label.setFont(new Font("Arial", Font.BOLD, 26));
         
-        ParkingComplex complex = new ParkingComplex();
-        JLabel totalRevenue = new JLabel("Total Estimated Revenue: $" + String.format("%.2f", complex.getFormattedRevenue()), SwingConstants.CENTER);
-        totalRevenue.setForeground(new Color(0, 102, 0)); // Dark Green
-        
+      
         headerPanel.add(label);
-        headerPanel.add(totalRevenue);
         this.add(headerPanel, BorderLayout.NORTH);
 
         // --- Table Setup ---

@@ -82,8 +82,42 @@ public class EditParkingComplex extends JPanel {
 
         });
 
+
+        JButton updateBtn = new JButton("Update Selected Spot");
+        updateBtn.addActionListener(e -> {
+            String selectedSpot = parkingSpotList.getSelectedValue();
+            if (selectedSpot != null) {
+                String[] options = {"REGULAR", "COMPACT", "RESERVED", "HANDICAPPED"};
+
+                String newType = (String) JOptionPane.showInputDialog(
+                        this,
+                        "Select New Vehicle Type for " + selectedSpot + ":",
+                        "Update Parking Spot",
+                        JOptionPane.PLAIN_MESSAGE,
+                        null,
+                        options,
+                        options[0]
+                );
+
+                if (newType != null) {
+                    controller.updateParkingSpot(selectedSpot, newType);
+                    loadSpots.run();
+                    JOptionPane.showMessageDialog(this, selectedSpot + " has been updated to " + newType);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Update cancelled.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Please select a spot to update.");
+            }
+        });
+
+
+
+            
+
         bottomPanel.add(insertBtn);
         bottomPanel.add(deleteBtn);
+        bottomPanel.add(updateBtn);
         bottomPanel.add(backButton);
         this.add(bottomPanel, BorderLayout.SOUTH);
 

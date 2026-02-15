@@ -13,6 +13,23 @@ public class ParkingComplex {
     private int totalFloors;
     protected  int totalAvailableSpots;
     protected  int totalOccupiedSpots;
+    
+    
+    
+    public double getRateByType(String type) {
+        if (type == null) return 5.0;
+        
+        return switch (type.toUpperCase()) {
+            case "REGULAR" -> 5.0;
+            case "COMPACT" -> 2.0;
+            case "RESERVED" -> 10.0;
+            case "HANDICAPPED" -> 1.0;
+            default -> 5.0; 
+        };
+    }
+
+    
+    
 
     public ParkingSpot findAvailableSpot() {
         // Logic to find and return an available parking spot
@@ -78,20 +95,12 @@ public class ParkingComplex {
     return calculator.getRevenue("2000-01-01", "2099-12-31");
 }
 
-    public boolean addParkingSpot(int floorId, String type) {
-    // 1. Preset rates based on type
-    double rate;
-    String upperType = type.toUpperCase();
+   public boolean addParkingSpot(int floorId, String type) {
+        // Use the global helper
+        double rate = getRateByType(type);
+        String upperType = type.toUpperCase();
 
-    switch (upperType) {
-        case "REGULAR" -> rate = 5.0;
-        case "COMPACT" -> rate = 2.0;
-        case "RESERVED" -> rate = 10.0;
-        case "HANDICAPPED" -> rate = 1.0;
-        default -> rate = 5.0; // Default fallback
-    }
-
-    int nextNumber = 1;
+        int nextNumber = 1;
         String countSql = "SELECT COUNT(*) FROM Parking_Spots WHERE floor_id = ?";
         try (Connection conn = sqlite.connect();
              var countStmt = conn.prepareStatement(countSql)) {
@@ -104,28 +113,21 @@ public class ParkingComplex {
             e.printStackTrace();
         }
 
-        // 3. Generate the Custom Spot ID (e.g., F1-R1-S5)
-        String generatedId = "F" + floorId +"-R1" + "-S" + nextNumber;
-
-    // 2. Optimized SQL Insert
-    String sql = "INSERT INTO Parking_Spots (spot_id, floor_id, spot_type, hourly_rate, status) VALUES (?, ?, ?, ?, 'AVAILABLE')";
-    
-    try (Connection conn = sqlite.connect();
-         var pstmt = conn.prepareStatement(sql)) {
+        String generatedId = "F" + floorId + "-R1-S" + nextNumber;
+        String sql = "INSERT INTO Parking_Spots (spot_id, floor_id, spot_type, hourly_rate, status) VALUES (?, ?, ?, ?, 'AVAILABLE')";
         
-       
-
-        pstmt.setString(1, generatedId);
-        pstmt.setInt(2, floorId);
-        pstmt.setString(3, upperType);
-        pstmt.setDouble(4, rate);
-
-        return pstmt.executeUpdate() > 0;
-    } catch (Exception e) {
-        e.printStackTrace();
-        return false;
+        try (Connection conn = sqlite.connect();
+             var pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, generatedId);
+            pstmt.setInt(2, floorId);
+            pstmt.setString(3, upperType);
+            pstmt.setDouble(4, rate);
+            return pstmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
-}
 
 public boolean deleteSpot(int floorId , String spotId) {
     String sql = "DELETE FROM Parking_Spots WHERE floor_id = ? AND spot_id = ?";
@@ -158,7 +160,21 @@ public List<String> getSpotsByFloor(int floorId){
 }
 
 
- 
+public boolean updateParkingSpot(String spotId, String newType) {
+    double newRate = getRateByType(newType);
+    String sql = "UPDATE Parking_Spots SET spot_type = ?, hourly_rate = ? WHERE spot_id = ?";
+    try (Connection conn = sqlite.connect();
+         var pstmt = conn.prepareStatement(sql)) {
+        pstmt.setString(1, newType.toUpperCase());
+        pstmt.setString(3, spotId);
+        pstmt.setDouble(2, newRate);
+        return pstmt.executeUpdate() > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    }
+
+}
 
 
      

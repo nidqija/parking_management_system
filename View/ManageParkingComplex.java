@@ -1,14 +1,17 @@
 package View;
 
 import Controller.ParkingComplex;
-import Controller.Floors; // Assuming you have a Floors controller for per-floor logic
+import Controller.Floors; 
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.util.List;
+import java.util.ArrayList;
 
 public class ManageParkingComplex extends JPanel {
 
     private JButton editButton = new JButton("Edit Parking Complex");
+    
 
     public ManageParkingComplex(MainFrame mainFrame) {
         this.setLayout(new BorderLayout(10, 10));
@@ -37,10 +40,36 @@ public class ManageParkingComplex extends JPanel {
 
         this.add(new JScrollPane(table), BorderLayout.CENTER);
 
+        JButton addFloorButton = new JButton("Add New Floor");
+        addFloorButton.addActionListener(e -> {
+            Floors floors = new Floors(0); 
+            String newFloorname = JOptionPane.showInputDialog(this, "Enter new floor name (e.g., 'Level 6'):");
+            if (newFloorname == null || newFloorname.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Floor name cannot be empty.");
+                return;
+            }
+
+            if (floors.addParkingFloor(newFloorname)) {
+                renderTableData(tableModel); 
+                JOptionPane.showMessageDialog(this, "New floor added successfully!");
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to add new floor. Please try again.");
+            }
+        });
+
+        
+
+
         // --- Footer Navigation ---
         JButton backButton = new JButton("Back to Admin Panel");
         backButton.addActionListener(e -> mainFrame.showPage("AdminPanel"));
-        this.add(backButton, BorderLayout.SOUTH);
+
+
+        JPanel footerPanel = new JPanel(new FlowLayout()); // Buttons side-by-side
+        footerPanel.add(addFloorButton);
+        footerPanel.add(backButton);
+        this.add(footerPanel, BorderLayout.SOUTH);
+     
 
         table.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
     @Override
@@ -76,17 +105,19 @@ public class ManageParkingComplex extends JPanel {
 
     private void renderTableData(DefaultTableModel model) {
         // We assume 5 floors as per your previous code snippets
-        for (int i = 1; i <= 5; i++) {
+        model.setRowCount(0); // Clear existing rows
+        List<Floors> floors = Floors.getFloors();
+        for (int i = 1; i <= floors.size(); i++) {
             Floors floorController = new Floors(i); 
             
             int available = floorController.getAvailableSpots(i);
             int occupied = floorController.getOccupiedSpots(i);
 
             Object[] rowData = {
-                "Floor " + i,
+                "Level " + i,
                 available,
                 occupied,
-                "View Details" // This will be the clickable action text
+                "View Details" 
             };
             model.addRow(rowData);
         }

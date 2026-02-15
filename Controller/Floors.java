@@ -1,13 +1,10 @@
 package Controller;
-import Model.ParkingSpot;
-import Model.Vehicle;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import Data.Sqlite;
 import Model.ParkingSpot;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Floors {
 
@@ -119,6 +116,20 @@ public class Floors {
         }
         return floors;
     }
+
+    public boolean addParkingFloor(String floorName) {
+        String sql = "INSERT INTO Floors (floor_name) VALUES (?)";
+        try (Connection conn = sqlite.connect();
+             var pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, floorName);
+            return pstmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    
 
     
 }

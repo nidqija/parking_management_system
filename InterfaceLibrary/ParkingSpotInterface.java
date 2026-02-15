@@ -61,16 +61,25 @@ public class ParkingSpotInterface {
     public boolean isAvailableFor(VehicleType vType, String plateNumber) {
         if (isOccupied)
             return false;
+
+       
         
         // 1. Reserved spots: only the assigned plate holder can enter
         if (this.type == SpotType.RESERVED) {
+
+            if(reservedForPlate == null || reservedForPlate.isEmpty()) {
+                return false; // No plate provided, cannot verify reservation
+            }
+
             // If spot is permanently reserved for a specific plate, only that plate can use it
             if (reservedForPlate != null && !reservedForPlate.isEmpty()) {
                 return plateNumber != null && plateNumber.equalsIgnoreCase(reservedForPlate);
             }
+
+
             // If spot is NOT permanently reserved, it's available to CAR, TRUCK, or HANDICAPPED
             // at the premium RM 10/hour rate (Motorcycles cannot use RESERVED spots)
-            return vType == VehicleType.CAR || vType == VehicleType.TRUCK || vType == VehicleType.HANDICAPPED;
+            return vType == VehicleType.CAR || vType == VehicleType.MOTORCYCLE || vType == VehicleType.TRUCK || vType == VehicleType.HANDICAPPED;
         }
 
         // 2. Logic based on Vehicle Type

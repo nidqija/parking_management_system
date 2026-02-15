@@ -43,6 +43,23 @@ public class MainFrame extends JFrame implements Navigator {
     cardLayout.show(mainPanel, "ManageFloorPanel");
     }
 
+    public void showManageParkingComplex(int floorId) {
+        ManageParkingComplex panel = new ManageParkingComplex(this);
+        mainPanel.add(panel, "ManageParkingComplex");
+        cardLayout.show(mainPanel, "ManageParkingComplex");
+    }
+
+    public void showEditParkingComplex(int floorId) {
+        EditParkingComplex panel = new EditParkingComplex(this, floorId);
+        mainPanel.add(panel, "EditParkingComplex");
+        cardLayout.show(mainPanel, "EditParkingComplex");
+    }
+
+
+    
+
+    
+
     
     public void showPage(String pageName){
 
@@ -67,6 +84,11 @@ public class MainFrame extends JFrame implements Navigator {
             return;
         }
 
+        if (pageName.equals("ManageParkingComplex")) {
+            ManageParkingComplex manageParkingComplex = new ManageParkingComplex(this);
+            mainPanel.add(manageParkingComplex, "ManageParkingComplex");
+        }
+
         if (pageName.equals("ManageRevenue")) {
             ManageRevenue manageRevenue = new ManageRevenue(this);
             mainPanel.add(manageRevenue, "ManageRevenue");
@@ -81,6 +103,18 @@ public class MainFrame extends JFrame implements Navigator {
             EntryPanel entryPanel = new EntryPanel(this,pg);
             mainPanel.add(entryPanel, "EntryPanel");
         }
+
+        if (pageName.equals("ShowManageFloorPanel")) {
+            showManageFloor(1);
+            return;
+        }
+
+        if(pageName.equals("EditParkingComplex")) {
+            EditParkingComplex editParkingComplex = new EditParkingComplex(this, 1);
+            mainPanel.add(editParkingComplex, "EditParkingComplex");
+        }
+
+       
 
         if (pageName.equals("ExitPanel")) {
             //ExitPanel exitPanel = new ExitPanel(this);
